@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="لوحة الطبيب - PneumoDetect، مراجعة وتقييم تحاليل الأشعة السينية">
+    <title data-i18n="doctor_dashboard_title">لوحة الطبيب - PneumoDetect</title>
+    
+    <!-- External Resources -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS Unified System -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    
+    <style>
+        /* --- Global Variables & Theme --- */
+        :root {
+            --primary-color: #007a7a;
+            --primary-hover: #005c5c;
+            --tech-accent-color: #4361ee;
+            --tech-accent-hover: #3a0ca3;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --warning-color: #ffc107;
+            --light-color: #f8fafb;
+            --light-section-bg: #f1f5f9;
+            --dark-color: #2d3748;
+            --white-color: #ffffff;
+            --gray-color: #718096;
+            --border-radius: 12px;
+            --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #00a8a8;
+            --primary-hover: #008c8c;
+            --tech-accent-color: #5a7fff;
+            --tech-accent-hover: #4361ee;
+            --light-color: #1a202c;
+            --light-section-bg: #2d3748;
+            --dark-color: #f7fafc;
+            --white-color: #2d3748;
+            --gray-color: #cbd5e0;
+            --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        [dir="ltr"] { font-family: 'Inter', sans-serif; }
+        [dir="rtl"] { font-family: 'Tajawal', sans-serif; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            line-height: 1.7;
+            transition: var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Accessibility & Focus --- */
+        a, button, input, select, textarea, [tabindex="0"] {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+        }
+        a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex="0"]:focus-visible {
+            outline-color: var(--tech-accent-color);
+            outline-offset: 3px;
+        }
+
+        /* --- Header --- */
+        header {
+            background-color: var(--white-color);
+            box-shadow: var(--box-shadow);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .branding {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .header-actions { display: flex; align-items: center; gap: 20px; }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--dark-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+        .theme-toggle:hover { background-color: rgba(0, 0, 0, 0.1); }
+
+        .lang-toggle {
+            position: relative;
+            background-color: #e2e8f0;
+            border-radius: 50px;
+            padding: 4px;
+            display: flex;
+        }
+        .lang-toggle button {
+            background: none;
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray-color);
+            border-radius: 50px;
+            transition: color 0.3s;
+            z-index: 2;
+            position: relative;
+        }
+        .lang-toggle button.active { color: var(--white-color); }
+        .lang-toggle .indicator {
+            position: absolute;
+            top: 4px;
+            height: calc(100% - 8px);
+            background-color: var(--primary-color);
+            border-radius: 50px;
+            transition: var(--transition);
+            z-index: 1;
+        }
+        [dir="rtl"] .lang-toggle .indicator { right: 4px; width: calc(50% - 4px); }
+        [dir="rtl"] .lang-toggle button[data-lang="en"].active ~ .indicator { transform: translateX(-100%); }
+        [dir="ltr"] .lang-toggle .indicator { left: 4px; width: calc(50% - 4px); }
+        [dir="ltr"] .lang-toggle button[data-lang="ar"].active ~ .indicator { transform: translateX(100%); }
+
+        .user-info-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background-color: var(--light-section-bg);
+            border-radius: 50px;
+            font-weight: 600;
+        }
+
+        /* --- Main Layout --- */
+        main {
+            flex-grow: 1;
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .page-header h2 { font-size: 2rem; color: var(--dark-color); }
+
+        /* --- Statistics Grid --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background-color: var(--white-color);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--box-shadow);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: var(--transition);
+            border-left: 5px solid var(--primary-color);
+        }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background-color: rgba(0, 122, 122, 0.1);
+            color: var(--primary-color);
+        }
+        .stat-info h3 { font-size: 0.9rem; color: var(--gray-color); margin-bottom: 5px; }
+        .stat-info .value { font-size: 2rem; font-weight: 700; color: var(--dark-color); }
+
+        /* --- Filters Section --- */
+        .filters {
+            background-color: var(--white-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--box-shadow);
+            margin-bottom: 30px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+        .filter-group label { font-weight: 600; font-size: 0.9rem; }
+        .filter-group input, .filter-group select {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            background-color: var(--white-color);
+            color: var(--dark-color);
+            transition: var(--transition);
+        }
+        .filter-group input:focus, .filter-group select:focus { border-color: var(--tech-accent-color); }
+
+        /* --- Analyses Grid --- */
+        .analyses-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .analysis-card {
+            background-color: var(--white-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+        .analysis-card:hover { transform: translateY(-5px); }
+        .analysis-header {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .analysis-title h4 { font-weight: 600; }
+        .patient-info {
+            font-size: 0.85rem;
+            color: var(--gray-color);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .analysis-status {
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .status-pending { background-color: rgba(255, 193, 7, 0.2); color: var(--warning-color); }
+        .status-reviewed { background-color: rgba(40, 167, 69, 0.2); color: var(--success-color); }
+        .status-rejected { background-color: rgba(220, 53, 69, 0.2); color: var(--error-color); }
+        
+        .analysis-content {
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            flex-grow: 1;
+        }
+        .image-section {
+            flex-shrink: 0;
+            width: 150px;
+            height: 150px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+        .image-section img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .details-section {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .detail-label { font-weight: 600; font-size: 0.9rem; }
+        .detail-value { text-align: right; }
+        [dir="ltr"] .detail-value { text-align: left; }
+        .confidence-bar {
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--tech-accent-color), #7209b7);
+        }
+        .diagnosis-box {
+            background-color: var(--light-section-bg);
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            margin-top: 5px;
+        }
+        .diagnosis-box h4 { font-size: 0.9rem; margin-bottom: 5px; }
+        .diagnosis-box p { font-size: 0.85rem; color: var(--gray-color); }
+
+        .review-section {
+            padding: 20px;
+            border-top: 1px solid #f0f0f0;
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        .review-section h4 { font-size: 1rem; margin-bottom: 15px; }
+        .review-section textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            resize: vertical;
+            font-family: inherit;
+            margin-bottom: 15px;
+        }
+        .review-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+        .btn-approve {
+            background-color: var(--success-color);
+            color: var(--white-color);
+            flex-grow: 1;
+        }
+        .btn-approve:hover { background-color: #218838; }
+        .btn-reject {
+            background-color: var(--error-color);
+            color: var(--white-color);
+        }
+        .btn-reject:hover { background-color: #c82333; }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        /* --- Skeleton Loader --- */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .skeleton-card {
+            background-color: var(--white-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+        .skeleton-header, .skeleton-content, .skeleton-review {
+            padding: 20px;
+        }
+        .skeleton-image { height: 150px; width: 150px; border-radius: var(--border-radius); }
+        .skeleton-text { height: 15px; border-radius: 5px; margin-bottom: 10px; }
+        .skeleton-text.short { width: 60%; }
+
+        /* --- Empty State --- */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray-color);
+        }
+        .empty-state i { font-size: 4rem; margin-bottom: 20px; opacity: 0.5; }
+        .empty-state h3 { font-size: 1.5rem; margin-bottom: 10px; }
+
+        /* --- Pagination --- */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        .pagination button {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            background-color: var(--white-color);
+            color: var(--dark-color);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .pagination button:hover { border-color: var(--tech-accent-color); }
+        .pagination button.active {
+            background-color: var(--tech-accent-color);
+            color: var(--white-color);
+            border-color: var(--tech-accent-color);
+        }
+
+        /* --- Modal for Reject Reason --- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+        .modal-content {
+            background-color: var(--white-color);
+            margin: 10% auto;
+            padding: 30px;
+            border: none;
+            width: 90%;
+            max-width: 500px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            animation: slideIn 0.4s;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h3 { color: var(--error-color); }
+        .close {
+            color: var(--gray-color);
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover { color: var(--dark-color); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* --- Notification System --- */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .notification {
+            background-color: var(--white-color);
+            color: var(--dark-color);
+            padding: 16px 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-width: 300px;
+            border-right: 5px solid var(--tech-accent-color);
+            animation: slideIn 0.3s ease-out;
+        }
+        .notification.error { border-right-color: var(--error-color); }
+        .notification.success { border-right-color: var(--success-color); }
+        .notification.warning { border-right-color: var(--warning-color); }
+        .notification i { font-size: 1.5rem; }
+        .notification.error i { color: var(--error-color); }
+        .notification.success i { color: var(--success-color); }
+        .notification.warning i { color: var(--warning-color); }
+        .notification-content { flex-grow: 1; }
+        .notification-title { font-weight: 700; margin-bottom: 4px; }
+        .notification-message { font-size: 0.9rem; color: var(--gray-color); }
+        .notification-close { cursor: pointer; color: var(--gray-color); }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 768px) {
+            main { padding: 20px; }
+            .page-header { flex-direction: column; align-items: flex-start; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .analyses-list { grid-template-columns: 1fr; }
+            .analysis-content { flex-direction: column; }
+            .image-section { width: 100%; height: 200px; }
+            .filters { flex-direction: column; align-items: stretch; }
+            .filter-group { width: 100%; }
+        }
+    </style>
+</head>
+<body role="application">
+    <!-- Skip to Main Content -->
+    <a href="#main-content" class="skip-to-main" aria-label="اذهب إلى المحتوى الرئيسي">
+        <span data-i18n="skip_to_main">اذهب إلى المحتوى الرئيسي</span>
+    </a>
+
+    <!-- Notification Container -->
+    <div class="notification-container" id="notification-container"></div>
+
+    <!-- Header -->
+    <header role="banner">
+        <div class="branding">
+            <i class="fas fa-lungs" aria-hidden="true"></i>
+            <h1>PneumoDetect</h1>
+        </div>
+        <div class="header-actions">
+            <button class="theme-toggle" id="theme-toggle" aria-label="تبديل الوضع الليلي">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+            <div class="lang-toggle" role="group" aria-label="تغيير اللغة">
+                <button onclick="setLanguage('ar')" data-lang="ar" class="active" aria-pressed="true">AR</button>
+                <button onclick="setLanguage('en')" data-lang="en" aria-pressed="false">EN</button>
+                <div class="indicator"></div>
+            </div>
+            <div class="user-info-section">
+                <div class="user-badge">
+                    <i class="fas fa-user-md"></i> 
+                    <span id="current-user-info">الدكتور</span>
+                </div>
+                <button class="btn btn-secondary" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i> 
+                    <span data-i18n="logout_btn">خروج</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" role="main">
+        <!-- Dashboard Header & Stats -->
+        <section class="page-header">
+            <div>
+                <h2 data-i18n="doctor_panel_title">📊 التحاليل المعلقة</h2>
+                <p data-i18n="doctor_panel_description">مراجعة وتقييم التحاليل المنتظرة التي تحتاج إلى رأي طبي.</p>
+            </div>
+            <a href="index.html#analysis" class="btn btn-primary" aria-label="ابدأ تحليل جديد">
+                <i class="fas fa-microscope"></i> 
+                <span data-i18n="new_analysis_btn">تحليل جديد</span>
+            </a>
+        </section>
+
+        <section class="stats-grid" role="region" aria-label="إحصائيات الطبيب">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 data-i18n="stat_pending_review">التحاليل المعلقة</h3>
+                    <div class="value" id="pending-count">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); color: var(--success);">
+                    <i class="fas fa-check-double"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 data-i18n="stat_reviewed_today">تم مراجعتها اليوم</h3>
+                    <div class="value" id="reviewed-today">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: var(--error);">
+                    <i class="fas fa-virus"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 data-i18n="stat_pneumonia_cases">حالات الالتهاب</h3>
+                    <div class="value" id="pneumonia-count">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: var(--warning);">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 data-i18n="stat_accuracy">معدل الدقة</h3>
+                    <div class="value">98%</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="filters" role="region" aria-label="تصفية التحاليل">
+            <div class="filter-group">
+                <label for="patient-search" data-i18n="doctor_search_placeholder">البحث بالمريض:</label>
+                <input type="text" id="patient-search" data-i18n-placeholder="doctor_search_placeholder" placeholder="ابحث باسم المريض...">
+            </div>
+            <div class="filter-group">
+                <label for="status-filter" data-i18n="filter_status_label">الحالة:</label>
+                <select id="status-filter">
+                    <option value="all" data-i18n="filter_all">الكل</option>
+                    <option value="pending" data-i18n="filter_pending">قيد الانتظار</option>
+                    <option value="reviewed" data-i18n="filter_reviewed">تم المراجعة</option>
+                    <option value="rejected" data-i18n="filter_rejected">مرفوض</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="loadDoctorAnalyses()">
+                <i class="fas fa-search"></i> 
+                <span data-i18n="filter_search_btn">بحث</span>
+            </button>
+        </section>
+
+        <!-- Analyses List -->
+        <section class="analyses-list" id="analyses-list" role="region" aria-label="قائمة التحاليل">
+            <!-- Skeleton Loaders will be inserted here -->
+        </section>
+
+        <!-- Empty State (hidden by default) -->
+        <div class="empty-state" id="empty-state" style="display: none;" role="status">
+            <i class="fas fa-inbox"></i>
+            <h3 data-i18n="empty_state_doctor_title">لا توجد تحاليل معلقة</h3>
+            <p data-i18n="empty_state_doctor_desc">جميع التحاليل تم مراجعتها. عمل رائع!</p>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination" style="display: none;" role="navigation" aria-label="ترقيم الصفحات"></div>
+    </main>
+
+    <!-- Reject Modal -->
+    <div id="reject-modal" class="modal" role="dialog" aria-labelledby="reject-modal-title" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="reject-modal-title" data-i18n="reject_analysis_title">رفض التحليل</h3>
+                <span class="close" onclick="closeRejectModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <label for="reject-reason" data-i18n="reject_reason_label">سبب الرفض (مطلوب):</label>
+                <textarea id="reject-reason" rows="4" style="width: 100%; margin-top: 10px;" required></textarea>
+            </div>
+            <div class="modal-footer" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="closeRejectModal()">
+                    <span data-i18n="cancel_btn">إلغاء</span>
+                </button>
+                <button type="button" class="btn btn-reject" onclick="confirmReject()">
+                    <i class="fas fa-times-circle"></i>
+                    <span data-i18n="confirm_reject_btn">تأكيد الرفض</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Translations
+        const translations = {
+            ar: {
+                skip_to_main: "اذهب إلى المحتوى الرئيسي",
+                doctor_panel_title: "📊 التحاليل المعلقة",
+                doctor_panel_description: "مراجعة وتقييم التحاليل المنتظرة التي تحتاج إلى رأي طبي.",
+                new_analysis_btn: "تحليل جديد",
+                stat_pending_review: "التحاليل المعلقة",
+                stat_reviewed_today: "تم مراجعتها اليوم",
+                stat_pneumonia_cases: "حالات الالتهاب",
+                stat_accuracy: "معدل الدقة",
+                doctor_search_placeholder: "البحث بالمريض:",
+                filter_status_label: "الحالة:",
+                filter_all: "الكل",
+                filter_pending: "قيد الانتظار",
+                filter_reviewed: "تم المراجعة",
+                filter_rejected: "مرفوض",
+                filter_search_btn: "بحث",
+                empty_state_doctor_title: "لا توجد تحاليل معلقة",
+                empty_state_doctor_desc: "جميع التحاليل تم مراجعتها. عمل رائع!",
+                model_notes_title: "📋 ملاحظات النموذج",
+                doctor_review_title: "✍️ إضافة تقييمك الطبي",
+                doctor_notes_label: "ملاحظاتك الطبية:",
+                doctor_notes_placeholder: "أضف ملاحظاتك الطبية والتوصيات...",
+                approve_btn: "موافقة وحفظ",
+                reject_btn: "رفض",
+                reject_analysis_title: "رفض التحليل",
+                reject_reason_label: "سبب الرفض (مطلوب):",
+                cancel_btn: "إلغاء",
+                confirm_reject_btn: "تأكيد الرفض",
+                success_review_saved: "تم حفظ التقييم بنجاح",
+                success_analysis_rejected: "تم رفض التحليل بنجاح",
+                error_saving_review: "فشل حفظ التقييم",
+                error_network: "فشل الاتصال بالخادم",
+                logout_btn: "خروج"
+            },
+            en: {
+                skip_to_main: "Go to main content",
+                doctor_panel_title: "📊 Pending Analyses",
+                doctor_panel_description: "Review and evaluate pending analyses that need a medical opinion.",
+                new_analysis_btn: "New Analysis",
+                stat_pending_review: "Pending Analyses",
+                stat_reviewed_today: "Reviewed Today",
+                stat_pneumonia_cases: "Pneumonia Cases",
+                stat_accuracy: "Accuracy Rate",
+                doctor_search_placeholder: "Search by Patient:",
+                filter_status_label: "Status:",
+                filter_all: "All",
+                filter_pending: "Pending",
+                filter_reviewed: "Reviewed",
+                filter_rejected: "Rejected",
+                filter_search_btn: "Search",
+                empty_state_doctor_title: "No pending analyses",
+                empty_state_doctor_desc: "All analyses have been reviewed. Great job!",
+                model_notes_title: "📋 Model Notes",
+                doctor_review_title: "✍️ Add Your Medical Evaluation",
+                doctor_notes_label: "Your Medical Notes:",
+                doctor_notes_placeholder: "Add your medical notes and recommendations...",
+                approve_btn: "Approve & Save",
+                reject_btn: "Reject",
+                reject_analysis_title: "Reject Analysis",
+                reject_reason_label: "Reason for Rejection (Required):",
+                cancel_btn: "Cancel",
+                confirm_reject_btn: "Confirm Rejection",
+                success_review_saved: "Evaluation saved successfully",
+                success_analysis_rejected: "Analysis rejected successfully",
+                error_saving_review: "Failed to save evaluation",
+                error_network: "Failed to connect to server",
+                logout_btn: "Logout"
+            }
+        };
+
+        const appState = { 
+            currentLang: 'ar',
+            isDarkMode: false,
+            currentPage: 1,
+            itemsPerPage: 6,
+            totalPages: 0,
+            currentAnalysisId: null
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('pneumoDetectLang') || 'ar';
+            const savedTheme = localStorage.getItem('pneumoDetectTheme') || 'light';
+            
+            setLanguage(savedLang);
+            setTheme(savedTheme);
+            setupEventListeners();
+            loadDoctorAnalyses();
+        });
+
+        function setLanguage(lang) {
+            appState.currentLang = lang;
+            localStorage.setItem('pneumoDetectLang', lang);
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            
+            document.querySelectorAll('.lang-toggle button').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+                btn.setAttribute('aria-pressed', btn.getAttribute('data-lang') === lang ? 'true' : 'false');
+            });
+            
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    element.textContent = translations[lang][key];
+                }
+            });
+
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                if (translations[lang] && translations[lang][key]) {
+                    element.placeholder = translations[lang][key];
+                }
+            });
+        }
+
+        function setTheme(theme) {
+            appState.isDarkMode = theme === 'dark';
+            localStorage.setItem('pneumoDetectTheme', theme);
+            document.documentElement.setAttribute('data-theme', theme);
+            
+            const themeIcon = document.getElementById('theme-icon');
+            themeIcon.className = appState.isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+            
+            const themeToggle = document.getElementById('theme-toggle');
+            themeToggle.setAttribute('aria-label', appState.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+
+        function toggleTheme() {
+            setTheme(appState.isDarkMode ? 'light' : 'dark');
+        }
+
+        function showNotification(message, type = 'info', title = '') {
+            const container = document.getElementById('notification-container');
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = type === 'error' ? 'fa-exclamation-circle' : (type === 'success' ? 'fa-check-circle' : 'fa-info-circle');
+            
+            notification.innerHTML = `
+                <i class="fas ${icon}"></i>
+                <div class="notification-content">
+                    ${title ? `<div class="notification-title">${title}</div>` : ''}
+                    <div class="notification-message">${message}</div>
+                </div>
+                <i class="fas fa-times notification-close" onclick="this.parentElement.remove()"></i>
+            `;
+            
+            container.appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
+        }
+
+        function setupEventListeners() {
+            const themeToggle = document.getElementById('theme-toggle');
+            themeToggle.addEventListener('click', toggleTheme);
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('isAuthenticated');
+            localStorage.removeItem('userRole');
+            window.location.href = '/login.html';
+        }
+
+        function showSkeletonLoaders(count) {
+            const container = document.getElementById('analyses-list');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < count; i++) {
+                const skeleton = document.createElement('div');
+                skeleton.className = 'skeleton-card';
+                skeleton.innerHTML = `
+                    <div class="skeleton-header skeleton"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-image skeleton"></div>
+                        <div style="flex-grow: 1; padding: 0 10px;">
+                            <div class="skeleton-text skeleton"></div>
+                            <div class="skeleton-text skeleton short"></div>
+                            <div class="skeleton-text skeleton"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-review skeleton"></div>
+                `;
+                container.appendChild(skeleton);
+            }
+        }
+
+        async function loadDoctorAnalyses(page = 1) {
+            const listContainer = document.getElementById('analyses-list');
+            const emptyState = document.getElementById('empty-state');
+            const pagination = document.getElementById('pagination');
+            
+            showSkeletonLoaders(appState.itemsPerPage);
+            emptyState.style.display = 'none';
+            pagination.style.display = 'none';
+
+            try {
+                const search = document.getElementById('patient-search').value.trim();
+                const status = document.getElementById('status-filter').value;
+                
+                // Real API call to /api/doctor/analyses
+                const response = await fetch(`/api/doctor/analyses?page=${page}&status=${status}&patient=${search}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRF-Token': getCsrfToken()
+                    },
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) throw new Error('Network response was not ok');
+                const apiData = await response.json();
+                
+                const mockData = {
+                    items: apiData.data?.items || [],
+                    pagination: apiData.data?.pagination || { page: 1, per_page: 9, total: 0, pages: 1 }
+                };
+                
+                if (mockData.items.length === 0) {
+                    listContainer.style.display = 'none';
+                    emptyState.style.display = 'block';
+                } else {
+                    listContainer.style.display = 'grid';
+                    emptyState.style.display = 'none';
+                    displayAnalyses(mockData.items);
+                    updateStats(mockData);
+                    updatePagination(mockData.pagination);
+                }
+            } catch (error) {
+                console.error('Error loading doctor analyses:', error);
+                showNotification(t('error_network'), 'error');
+                listContainer.innerHTML = `<p class="error-message">${t('error_loading_data')}</p>`;
+            }
+        }
+
+        function generateMockData(search, status, page) {
+            // This function is now deprecated and only kept for backward compatibility
+            return { items: [], pagination: { page: 1, per_page: 9, total: 0, pages: 1 } };
+        }
+            
+            // Filter by search and status
+            let filteredItems = allItems;
+            if (search) {
+                filteredItems = allItems.filter(item => 
+                    item.patient_username.toLowerCase().includes(search.toLowerCase())
+                );
+            }
+            if (status && status !== 'all') {
+                filteredItems = filteredItems.filter(item => item.review_status === status);
+            }
+            
+            // Paginate
+            const startIndex = (page - 1) * appState.itemsPerPage;
+            const endIndex = startIndex + appState.itemsPerPage;
+            const paginatedItems = filteredItems.slice(startIndex, endIndex);
+            
+            return {
+                items: paginatedItems,
+                pagination: {
+                    page: page,
+                    per_page: appState.itemsPerPage,
+                    total: filteredItems.length,
+                    pages: Math.ceil(filteredItems.length / appState.itemsPerPage)
+                }
+            };
+        }
+
+        function displayAnalyses(analyses) {
+            const container = document.getElementById('analyses-list');
+            container.innerHTML = analyses.map((analysis, index) => `
+                <div class="analysis-card doctor">
+                    <div class="analysis-header">
+                        <div class="analysis-title">
+                            <h4>تحليل #${analysis.id}</h4>
+                            <div class="patient-info">
+                                <i class="fas fa-user"></i> 
+                                ${analysis.patient_username}
+                            </div>
+                        </div>
+                        <span class="analysis-status status-${analysis.review_status}">
+                            <i class="fas fa-${analysis.review_status === 'pending' ? 'hourglass' : analysis.review_status === 'reviewed' ? 'check' : 'times'}"></i>
+                            ${analysis.review_status === 'pending' ? t('filter_pending') : analysis.review_status === 'reviewed' ? t('filter_reviewed') : t('filter_rejected')}
+                        </span>
+                    </div>
+
+                    <div class="analysis-content">
+                        <div class="image-section">
+                            <img src="${analysis.image_url}" alt="صورة أشعة سينية" onerror="this.onerror=null;this.src='https://picsum.photos/seed/placeholder/400/300.jpg';">
+                        </div>
+                        <div class="details-section">
+                            <div class="detail-row">
+                                <div class="detail-label" data-i18n="result_confidence_label">درجة الثقة:</div>
+                                <div class="detail-value">${(analysis.confidence).toFixed(1)}%</div>
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: ${analysis.confidence}%"></div>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <div class="detail-label" data-i18n="result_analysis_label">التشخيص الأولي:</div>
+                                <div class="detail-value">
+                                    ${analysis.model_result === 'PNEUMONIA' ? '🔴 التهاب رئوي' : '🟢 سليم'}
+                                </div>
+                            </div>
+
+                            <div class="diagnosis-box">
+                                <h4 data-i18n="model_notes_title">📋 ملاحظات النموذج</h4>
+                                <p>${analysis.explanation}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="review-section">
+                        <h4 data-i18n="doctor_review_title">✍️ إضافة تقييمك الطبي</h4>
+                        <form onsubmit="submitReview(event, '${analysis.id}')">
+                            <div class="form-group">
+                                <label for="notes-${index}" data-i18n="doctor_notes_label">ملاحظاتك الطبية:</label>
+                                <textarea 
+                                    id="notes-${index}" 
+                                    name="notes" 
+                                    data-i18n-placeholder="doctor_notes_placeholder" 
+                                    placeholder="أضف ملاحظاتك الطبية والتوصيات..."
+                                    minlength="5"
+                                    maxlength="5000"
+                                    required
+                                ></textarea>
+                            </div>
+
+                            <div class="review-actions">
+                                <button type="submit" class="btn btn-approve" aria-label="موافقة وحفظ التقييم">
+                                    <i class="fas fa-check-circle"></i> 
+                                    <span data-i18n="approve_btn">موافقة وحفظ</span>
+                                </button>
+                                <button type="button" class="btn btn-reject" onclick="openRejectModal('${analysis.id}')" aria-label="رفض التحليل">
+                                    <i class="fas fa-times-circle"></i> 
+                                    <span data-i18n="reject_btn">رفض</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStats(data) {
+            const items = data.items || [];
+            const pending = items.filter(i => i.review_status === 'pending').length;
+            const reviewed = items.filter(i => i.review_status === 'reviewed').length;
+            const pneumonia = items.filter(i => i.model_result === 'PNEUMONIA').length;
+
+            // Animate counter update
+            animateCounter('pending-count', pending);
+            animateCounter('reviewed-today', reviewed);
+            animateCounter('pneumonia-count', pneumonia);
+        }
+
+        function animateCounter(id, target) {
+            const element = document.getElementById(id);
+            const start = parseInt(element.textContent) || 0;
+            const increment = (target - start) / 30;
+            let current = start;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= target) || (increment < 0 && current <= target)) {
+                    element.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.round(current);
+                }
+            }, 30);
+        }
+
+        function updatePagination(pagination) {
+            if (!pagination.pages || pagination.pages <= 1) {
+                document.getElementById('pagination').style.display = 'none';
+                return;
+            }
+
+            const paginationContainer = document.getElementById('pagination');
+            let html = '';
+            
+            if (pagination.page > 1) {
+                html += `<button onclick="currentPage = ${pagination.page - 1}; loadDoctorAnalyses(currentPage);" aria-label="الصفحة السابقة">${t('pagination_prev') || 'السابقة'}</button>`;
+            }
+
+            for (let i = 1; i <= pagination.pages; i++) {
+                html += `<button onclick="currentPage = ${i}; loadDoctorAnalyses(currentPage);" ${i === pagination.page ? 'class="active"' : ''} aria-label="الصفحة ${i}">${i}</button>`;
+            }
+
+            if (pagination.page < pagination.pages) {
+                html += `<button onclick="currentPage = ${pagination.page + 1}; loadDoctorAnalyses(currentPage);" aria-label="الصفحة التالية">${t('pagination_next') || 'التالية'}</button>`;
+            }
+
+            paginationContainer.innerHTML = html;
+            paginationContainer.style.display = 'flex';
+        }
+
+        function openRejectModal(analysisId) {
+            appState.currentAnalysisId = analysisId;
+            document.getElementById('reject-modal').style.display = 'block';
+            document.getElementById('reject-modal').setAttribute('aria-hidden', 'false');
+        }
+
+        function closeRejectModal() {
+            document.getElementById('reject-modal').style.display = 'none';
+            document.getElementById('reject-modal').setAttribute('aria-hidden', 'true');
+            document.getElementById('reject-reason').value = '';
+        }
+
+        async function confirmReject() {
+            const reason = document.getElementById('reject-reason').value.trim();
+            if (!reason) {
+                showNotification(t('error_reject_requires_reason') || 'يجب إدخال سبب الرفض', 'warning');
+                return;
+            }
+
+            try {
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                showNotification(t('success_analysis_rejected'), 'success');
+                closeRejectModal();
+                loadDoctorAnalyses(appState.currentPage);
+            } catch (error) {
+                console.error('Error rejecting analysis:', error);
+                showNotification(t('error_network'), 'error');
+            }
+        }
+
+        async function submitReview(event, analysisId) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const notes = formData.get('notes');
+            const status = 'reviewed'; // Default to approved
+
+            try {
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                showNotification(t('success_review_saved'), 'success');
+                event.target.reset();
+                loadDoctorAnalyses(appState.currentPage);
+            } catch (error) {
+                console.error('Error submitting review:', error);
+                showNotification(t('error_network'), 'error');
+            }
+        }
+        
+        function getCsrfToken() {
+            const name = 'XSRF-TOKEN=';
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const cookieArray = decodedCookie.split(';');
+            for (let i = 0; i < cookieArray.length; i++) {
+                let cookie = cookieArray[i].trim();
+                if (cookie.indexOf(name) === 0) {
+                    return cookie.substring(name.length);
+                }
+            }
+            return '';
+        }
+        
+        function t(key) { 
+            return translations[appState.currentLang][key] || key; 
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('reject-modal');
+            if (event.target === modal) {
+                closeRejectModal();
+            }
+        }
+    </script>
+    <!-- Core JavaScript Module -->
+    <script src="{{ url_for('static', filename='core.js') }}"></script>
+    <script>
+        // Initialize PneumoApp on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.PneumoApp) {
+                PneumoApp.init();
+                PneumoApp.Theme.init();
+            }
+        });
+    </script>
+</body>
+</html>

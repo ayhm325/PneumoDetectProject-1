@@ -1,0 +1,42 @@
+# PneumoDetect - Main Requirements (4 Categories)
+# Production-Ready Dependencies
+# Version: 1.0
+
+# ========================================================
+# 1. WEB FRAMEWORK (Flask Ecosystem)
+# ========================================================
+Flask==3.0.0
+flask-cors==4.0.0
+python-dotenv==1.0.0
+Werkzeug==3.0.1
+gunicorn==21.2.0
+
+# ========================================================
+# 2. DATABASE (SQLAlchemy & Migrations)
+# ========================================================
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-Migrate==4.0.5
+alembic==1.13.0
+
+# ========================================================
+# 3. ML & IMAGE PROCESSING (Optional: Comment out if not needed)
+# ========================================================
+# Uncomment ONE based on your environment:
+# CPU (recommended for local dev):
+torch==2.1.0 --index-url https://download.pytorch.org/whl/cpu
+# GPU (CUDA 11.8):
+# torch==2.1.0 --index-url https://download.pytorch.org/whl/cu118
+torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cpu
+pytorch-lightning==2.1.0
+transformers==4.37.0
+opencv-python==4.9.0.80
+
+# ========================================================
+# 4. UTILITIES & DATA
+# ========================================================
+numpy==1.26.4
+Pillow==11.3.0
+python-dateutil==2.8.2
+pytz==2024.1
+redis==5.0.1

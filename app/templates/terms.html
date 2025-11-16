@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="شروط الخدمة - PneumoDetect">
+    <title>شروط الخدمة - PneumoDetect</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    
+    <style>
+        :root {
+            --primary-color: #007a7a;
+            --light-color: #f8fafb;
+            --dark-color: #2d3748;
+            --white-color: #ffffff;
+            --gray-color: #718096;
+            --border-radius: 12px;
+            --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            font-family: 'Tajawal', sans-serif;
+            line-height: 1.7;
+        }
+        
+        header {
+            background-color: var(--white-color);
+            box-shadow: var(--box-shadow);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .branding {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .container {
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .content-box {
+            background-color: var(--white-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 40px;
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary-color);
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 30px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin: 15px 0 15px 20px;
+        }
+        
+        li {
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .back-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .updated-date {
+            text-align: center;
+            color: var(--gray-color);
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="branding">
+            <i class="fas fa-lungs"></i>
+            <h1 style="margin: 0; font-size: 1.5rem;">PneumoDetect</h1>
+        </div>
+        <a href="/" style="text-decoration: none; color: var(--primary-color);">العودة للرئيسية</a>
+    </header>
+    
+    <main class="container">
+        <div class="content-box">
+            <h1>📋 شروط الخدمة</h1>
+            
+            <p class="updated-date">آخر تحديث: نوفمبر 2025</p>
+            
+            <h2>1. مقدمة</h2>
+            <p>
+                يرحب بك في PneumoDetect. هذه الشروط والأحكام تحكم استخدامك للخدمة والبيانات والمنتجات المقدمة. 
+                باستخدام هذا الموقع والخدمات المرتبطة به، فإنك توافق على الالتزام بهذه الشروط والأحكام.
+            </p>
+            
+            <h2>2. استخدام الخدمة</h2>
+            <ul>
+                <li>يجب أن تكون مستخدماً مصرحاً للوصول إلى الخدمة</li>
+                <li>يجب عدم استخدام الخدمة لأغراض غير قانونية</li>
+                <li>يجب عدم محاولة الوصول غير المصرح إلى الخدمة</li>
+                <li>يتحمل المستخدم مسؤولية جميع الأنشطة تحت حسابه</li>
+            </ul>
+            
+            <h2>3. حقوق والتزامات المستخدم</h2>
+            <p>المستخدم يوافق على:</p>
+            <ul>
+                <li>تقديم معلومات صحيقة وحديثة عند التسجيل</li>
+                <li>الحفاظ على سرية كلمة المرور الخاصة به</li>
+                <li>عدم مشاركة حسابه مع شخص آخر</li>
+                <li>الإبلاغ الفوري عن أي استخدام غير مصرح</li>
+            </ul>
+            
+            <h2>4. بيانات طبية وخصوصية</h2>
+            <ul>
+                <li>جميع البيانات الطبية محمية بموجب قوانين الخصوصية</li>
+                <li>لن نشارك بيانات المريض مع أطراف ثالثة بدون موافقة</li>
+                <li>يمكن للمستخدم طلب نسخة من بياناته في أي وقت</li>
+            </ul>
+            
+            <h2>5. تنصل من المسؤولية</h2>
+            <p>
+                PneumoDetect توفر الخدمة "كما هي" بدون ضمانات. نتائج التحليل هي للمساعدة فقط ويجب أن يتم التحقق منها 
+                من قبل متخصص طبي مرخص.
+            </p>
+            
+            <h2>6. الحد من المسؤولية</h2>
+            <p>
+                في أي حال من الأحوال، لن تكون PneumoDetect مسؤولة عن أي أضرار مباشرة أو غير مباشرة أو عرضية أو خاصة 
+                أو تبعية ناشئة عن استخدام الخدمة.
+            </p>
+            
+            <h2>7. التعديلات على الشروط</h2>
+            <p>
+                نحتفظ بالحق في تعديل هذه الشروط في أي وقت. سيتم إبلاغ المستخدمين بأي تعديلات مهمة عن طريق البريد الإلكتروني.
+            </p>
+            
+            <h2>8. القانون الحاكم</h2>
+            <p>
+                تحكم هذه الشروط بموجب القوانين المعمول بها، وسيتم تسوية أي نزاعات في المحاكم المختصة.
+            </p>
+            
+            <div class="back-link">
+                <a href="/">← العودة للرئيسية</a>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

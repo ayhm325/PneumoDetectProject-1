@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pneumodetect"
+version = "1.0.0"
+description = "AI-powered pneumonia detection from chest X-rays"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Ayhm Obeidat", email = "ayhm@example.com"}
+]
+requires-python = ">=3.9"
+dependencies = [
+    # Web Framework
+    "Flask==3.0.0",
+    "flask-cors==4.0.0",
+    "python-dotenv==1.0.0",
+    "Werkzeug==3.0.1",
+    "gunicorn==21.2.0",
+    
+    # Database
+    "Flask-SQLAlchemy==3.1.1",
+    "Flask-Login==0.6.3",
+    "Flask-Migrate==4.0.5",
+    "alembic==1.13.0",
+    
+    # ML & Image Processing (Optional)
+    "torch==2.1.0",
+    "torchvision==0.16.0",
+    "pytorch-lightning==2.1.0",
+    "transformers==4.37.0",
+    "opencv-python==4.9.0.80",
+    
+    # Utilities
+    "numpy==1.26.4",
+    "Pillow==11.3.0",
+    "python-dateutil==2.8.2",
+    "pytz==2024.1",
+    "redis==5.0.1"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.4",
+    "pytest-cov==4.1.0",
+    "black==24.1.0",
+    "flake8==7.0.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/AyhmObeidat/PneumoDetect"
+Repository = "https://github.com/AyhmObeidat/PneumoDetect.git"
+
+[tool.setuptools]
+packages = ["app"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.flake8]
+max-line-length = 88
+exclude = [".git", "__pycache__", ".venv", "venv"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "--cov=app --cov-report=html"

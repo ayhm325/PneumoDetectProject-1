@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="تسجيل الدخول إلى PneumoDetect - الوصول إلى حسابك">
+    <title data-i18n="login_title">تسجيل الدخول - PneumoDetect</title>
+    
+    <!-- External Resources -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS Unified System -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    
+    <style>
+        /* --- Global Variables & Theme --- */
+        :root {
+            --primary-color: #007a7a;
+            --primary-hover: #005c5c;
+            --tech-accent-color: #4361ee;
+            --tech-accent-hover: #3a0ca3;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --warning-color: #ffc107;
+            --light-color: #f8fafb;
+            --light-section-bg: #f1f5f9;
+            --dark-color: #2d3748;
+            --white-color: #ffffff;
+            --gray-color: #718096;
+            --border-radius: 12px;
+            --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #00a8a8;
+            --primary-hover: #008c8c;
+            --tech-accent-color: #5a7fff;
+            --tech-accent-hover: #4361ee;
+            --light-color: #1a202c;
+            --light-section-bg: #2d3748;
+            --dark-color: #f7fafc;
+            --white-color: #2d3748;
+            --gray-color: #cbd5e0;
+            --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        [dir="ltr"] { font-family: 'Inter', sans-serif; }
+        [dir="rtl"] { font-family: 'Tajawal', sans-serif; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            line-height: 1.7;
+            transition: var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Accessibility & Focus --- */
+        a, button, input, [tabindex="0"] {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+        }
+        a:focus-visible, button:focus-visible, input:focus-visible, [tabindex="0"]:focus-visible {
+            outline-color: var(--tech-accent-color);
+            outline-offset: 3px;
+        }
+
+        /* --- Header --- */
+        header {
+            background-color: var(--white-color);
+            box-shadow: var(--box-shadow);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .branding {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .header-actions { display: flex; align-items: center; gap: 20px; }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--dark-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+        .theme-toggle:hover { background-color: rgba(0, 0, 0, 0.1); }
+
+        .lang-toggle {
+            position: relative;
+            background-color: #e2e8f0;
+            border-radius: 50px;
+            padding: 4px;
+            display: flex;
+        }
+        .lang-toggle button {
+            background: none;
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray-color);
+            border-radius: 50px;
+            transition: color 0.3s;
+            z-index: 2;
+            position: relative;
+        }
+        .lang-toggle button.active { color: var(--white-color); }
+        .lang-toggle .indicator {
+            position: absolute;
+            top: 4px;
+            height: calc(100% - 8px);
+            background-color: var(--primary-color);
+            border-radius: 50px;
+            transition: var(--transition);
+            z-index: 1;
+        }
+        [dir="rtl"] .lang-toggle .indicator { right: 4px; width: calc(50% - 4px); }
+        [dir="rtl"] .lang-toggle button[data-lang="en"].active ~ .indicator { transform: translateX(-100%); }
+        [dir="ltr"] .lang-toggle .indicator { left: 4px; width: calc(50% - 4px); }
+        [dir="ltr"] .lang-toggle button[data-lang="ar"].active ~ .indicator { transform: translateX(100%); }
+
+        /* --- Main Layout --- */
+        .login-container {
+            flex-grow: 1;
+            display: flex;
+            background-color: var(--light-section-bg);
+        }
+
+        .welcome-section, .form-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .welcome-section {
+            background: linear-gradient(135deg, rgba(0, 122, 122, 0.9), rgba(0, 92, 92, 0.9)), 
+                        url('https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80') center/cover;
+            color: var(--white-color);
+            text-align: center;
+            gap: 30px;
+        }
+
+        .welcome-section h1 { font-size: 2.5rem; font-weight: 700; }
+        .welcome-section p { font-size: 1.1rem; opacity: 0.9; max-width: 80%; margin: 0 auto; }
+        
+        .welcome-features { display: flex; flex-direction: column; gap: 20px; }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-align: right;
+        }
+        [dir="ltr"] .feature-item { text-align: left; }
+        .feature-item i { font-size: 1.5rem; min-width: 30px; }
+
+        /* --- Form Styling --- */
+        .login-box {
+            background-color: var(--white-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+
+        .login-box h2 { text-align: center; margin-bottom: 30px; color: var(--primary-color); }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-group i {
+            position: absolute;
+            right: 15px;
+            color: var(--gray-color);
+            z-index: 2;
+        }
+        [dir="ltr"] .input-group i { right: auto; left: 15px; }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            background-color: var(--white-color);
+            color: var(--dark-color);
+        }
+        [dir="ltr"] .form-control { padding: 12px 45px 12px 15px; }
+        
+        .form-control:focus {
+            border-color: var(--tech-accent-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+        .form-control.error { border-color: var(--error-color); }
+
+        .password-group { position: relative; }
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--gray-color);
+            cursor: pointer;
+            z-index: 2;
+        }
+        [dir="ltr"] .password-toggle { right: auto; left: 45px; }
+
+        .error-text {
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: block;
+            color: var(--error-color);
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .forgot-password-link {
+            color: var(--tech-accent-color);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        .forgot-password-link:hover { text-decoration: underline; }
+
+        /* --- Attempt Counter Warning --- */
+        .warning-message {
+            background-color: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid var(--warning-color);
+            color: var(--warning-color);
+            padding: 12px 15px;
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        /* --- Buttons --- */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 28px;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            font-size: 1rem;
+        }
+        .btn-primary {
+            background-color: var(--tech-accent-color);
+            color: var(--white-color);
+        }
+        .btn-primary:hover {
+            background-color: var(--tech-accent-hover);
+            transform: translateY(-2px);
+        }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .loading-spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 2px solid white;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- Links --- */
+        .signup-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        .signup-link a {
+            color: var(--tech-accent-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .signup-link a:hover { text-decoration: underline; }
+
+        /* --- Notification System --- */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .notification {
+            background-color: var(--white-color);
+            color: var(--dark-color);
+            padding: 16px 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-width: 300px;
+            border-right: 5px solid var(--tech-accent-color);
+            animation: slideIn 0.3s ease-out;
+        }
+        .notification.error { border-right-color: var(--error-color); }
+        .notification.success { border-right-color: var(--success-color); }
+        .notification.warning { border-right-color: var(--warning-color); }
+        .notification i { font-size: 1.5rem; }
+        .notification.error i { color: var(--error-color); }
+        .notification.success i { color: var(--success-color); }
+        .notification.warning i { color: var(--warning-color); }
+        .notification-content { flex-grow: 1; }
+        .notification-title { font-weight: 700; margin-bottom: 4px; }
+        .notification-message { font-size: 0.9rem; color: var(--gray-color); }
+        .notification-close { cursor: pointer; color: var(--gray-color); }
+        @keyframes slideIn { from { transform: translateX(-120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 992px) {
+            .login-container { flex-direction: column; }
+            .welcome-section { padding: 60px 40px; }
+            .form-section { padding: 40px 20px; }
+        }
+        @media (max-width: 576px) {
+            .welcome-section h1 { font-size: 2rem; }
+            .login-box { padding: 30px 20px; }
+            .form-options { flex-direction: column; gap: 15px; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body role="application">
+    <!-- Skip to Main Content -->
+    <a href="#main-content" class="skip-to-main" aria-label="اذهب إلى نموذج الدخول">
+        <span data-i18n="skip_to_main">اذهب إلى نموذج الدخول</span>
+    </a>
+
+    <!-- Notification Container -->
+    <div class="notification-container" id="notification-container"></div>
+
+    <!-- Header -->
+    <header role="banner">
+        <div class="branding">
+            <i class="fas fa-lungs" aria-hidden="true"></i>
+            <h1>PneumoDetect</h1>
+        </div>
+        <div class="header-actions">
+            <button class="theme-toggle" id="theme-toggle" aria-label="تبديل الوضع الليلي">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+            <div class="lang-toggle" role="group" aria-label="تغيير اللغة">
+                <button onclick="setLanguage('ar')" data-lang="ar" class="active" aria-pressed="true">AR</button>
+                <button onclick="setLanguage('en')" data-lang="en" aria-pressed="false">EN</button>
+                <div class="indicator"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="login-container" role="main">
+        <!-- Welcome Section -->
+        <section class="welcome-section" role="region" aria-labelledby="welcome-title">
+            <h1 id="welcome-title" data-i18n="login_welcome_title">مرحباً بعودتك</h1>
+            <p data-i18n="login_welcome_subtitle">
+                سجل دخولك للوصول إلى لوحة التحكم الخاصة بك ومتابعة تحاليلك الطبية.
+            </p>
+            
+            <div class="welcome-features">
+                <div class="feature-item">
+                    <i class="fas fa-bolt"></i>
+                    <div>
+                        <strong data-i18n="home_card1_title">⚡ تحليل فوري</strong>
+                        <p data-i18n="home_card1_desc">احصل على نتائج دقيقة في ثوانٍ معدلة.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-history"></i>
+                    <div>
+                        <strong data-i18n="home_card4_title">📈 سجل شامل</strong>
+                        <p data-i18n="home_card4_desc">احتفظ بسجل كامل لجميع تحاليلك.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <div>
+                        <strong data-i18n="home_card3_title">🔒 أمان عالي</strong>
+                        <p data-i18n="home_card3_desc">بياناتك محمية بأعلى معايير التشفير.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Form Section -->
+        <section class="form-section" role="region" aria-labelledby="form-title">
+            <div class="login-box">
+                <h2 id="form-title" data-i18n="login_title">🔐 تسجيل الدخول</h2>
+                
+                <!-- Error Display Area -->
+                <div id="login-error" class="alert alert-error" style="display: none;" role="alert" aria-live="assertive">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="error-message"></span>
+                </div>
+
+                <form id="login-form" novalidate role="form" aria-label="نموذج تسجيل الدخول">
+                    <!-- CSRF Token for Security -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" aria-hidden="true">
+                    
+                    <!-- Username -->
+                    <div class="form-group">
+                        <label for="login-username" data-i18n="login_username_label">اسم المستخدم</label>
+                        <div class="input-group">
+                            <i class="fas fa-user" aria-hidden="true"></i>
+                            <input 
+                                type="text" 
+                                id="login-username" 
+                                name="username"
+                                class="form-control"
+                                data-i18n-placeholder="login_username_placeholder" 
+                                placeholder="أدخل اسم المستخدم"
+                                autocomplete="username"
+                                required
+                                minlength="3"
+                                maxlength="50"
+                                aria-label="اسم المستخدم"
+                                aria-describedby="username-error"
+                            >
+                        </div>
+                        <span id="username-error" class="error-text" style="display: none;"></span>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-group">
+                        <label for="login-password" data-i18n="login_password_label">كلمة المرور</label>
+                        <div class="input-group password-group">
+                            <i class="fas fa-lock" aria-hidden="true"></i>
+                            <input 
+                                type="password" 
+                                id="login-password" 
+                                name="password"
+                                class="form-control"
+                                data-i18n-placeholder="login_password_placeholder" 
+                                placeholder="أدخل كلمة المرور"
+                                autocomplete="current-password"
+                                required
+                                minlength="6"
+                                maxlength="100"
+                                aria-label="كلمة المرور"
+                                aria-describedby="password-error"
+                            >
+                            <button type="button" class="password-toggle" id="toggle-password" aria-label="إظهار/إخفاء كلمة المرور" aria-pressed="false">
+                                <i class="fas fa-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <span id="password-error" class="error-text" style="display: none;"></span>
+                    </div>
+
+                    <!-- Remember Me & Forgot Password -->
+                    <div class="form-options">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="remember-me" name="remember_me" aria-label="تذكرني على هذا الجهاز">
+                            <label for="remember-me" data-i18n="login_remember_me">تذكرني</label>
+                        </div>
+                        <a href="/forgot-password" class="forgot-password-link" data-i18n="login_forgot_password" aria-label="استرجاع كلمة المرور">هل نسيت كلمة المرور؟</a>
+                    </div>
+
+                    <!-- Attempt Counter (Feedback) -->
+                    <div id="attempt-feedback" style="display: none;" role="alert" aria-live="assertive" class="warning-message">
+                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                        <span id="attempt-text"></span>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-primary" id="login-btn" aria-label="تسجيل الدخول إلى الحساب">
+                        <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
+                        <span data-i18n="login_submit_btn">دخول</span>
+                    </button>
+                </form>
+
+                <div class="signup-link">
+                    <span data-i18n="login_no_account">ليس لديك حساب؟</span>
+                    <a href="register.html" data-i18n="login_register_link" aria-label="الانتقال إلى صفحة إنشاء حساب جديد">إنشاء حساب جديد</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Translations
+        const translations = {
+            ar: {
+                skip_to_main: "اذهب إلى نموذج الدخول",
+                login_welcome_title: "مرحباً بعودتك",
+                login_welcome_subtitle: "سجل دخولك للوصول إلى لوحة التحكم الخاصة بك ومتابعة تحاليلك الطبية.",
+                home_card1_title: "⚡ تحليل فوري", home_card1_desc: "احصل على نتائج دقيقة في ثوانٍ معدلة.",
+                home_card3_title: "🔒 أمان عالي", home_card3_desc: "بياناتك محمية بأعلى معايير التشفير.",
+                home_card4_title: "📈 سجل شامل", home_card4_desc: "احتفظ بسجل كامل لجميع تحاليلك.",
+                login_title: "🔐 تسجيل الدخول",
+                login_username_label: "اسم المستخدم",
+                login_username_placeholder: "أدخل اسم المستخدم",
+                login_password_label: "كلمة المرور",
+                login_password_placeholder: "أدخل كلمة المرور",
+                login_remember_me: "تذكرني",
+                login_forgot_password: "هل نسيت كلمة المرور؟",
+                login_submit_btn: "دخول",
+                login_no_account: "ليس لديك حساب؟",
+                login_register_link: "إنشاء حساب جديد",
+                error_invalid_credentials: "اسم المستخدم أو كلمة المرور غير صحيحة.",
+                error_account_locked: "تم تأمين حسابك مؤقتاً بسبب محاولات الدخول المتكررة. يرجى المحاولة بعد 15 دقيقة.",
+                error_network: "فشل الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.",
+                success_login: "تم تسجيل الدخول بنجاح! جاري التحويل..."
+            },
+            en: {
+                skip_to_main: "Go to login form",
+                login_welcome_title: "Welcome Back",
+                login_welcome_subtitle: "Log in to access your dashboard and track your medical analyses.",
+                home_card1_title: "⚡ Instant Analysis", home_card1_desc: "Get accurate results in seconds.",
+                home_card3_title: "🔒 High Security", home_card3_desc: "Your data is protected with highest encryption standards.",
+                home_card4_title: "📈 Comprehensive History", home_card4_desc: "Keep a complete record of all your analyses.",
+                login_title: "🔐 Login",
+                login_username_label: "Username",
+                login_username_placeholder: "Enter your username",
+                login_password_label: "Password",
+                login_password_placeholder: "Enter your password",
+                login_remember_me: "Remember Me",
+                login_forgot_password: "Forgot Password?",
+                login_submit_btn: "Login",
+                login_no_account: "Don't have an account?",
+                login_register_link: "Create a new account",
+                error_invalid_credentials: "Invalid username or password.",
+                error_account_locked: "Your account has been temporarily locked due to multiple failed login attempts. Please try again in 15 minutes.",
+                error_network: "Failed to connect to the server. Please check your internet connection.",
+                success_login: "Login successful! Redirecting..."
+            }
+        };
+
+        const appState = { 
+            currentLang: 'ar',
+            isDarkMode: false,
+            loginAttempts: 0,
+            maxLoginAttempts: 3
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('pneumoDetectLang') || 'ar';
+            const savedTheme = localStorage.getItem('pneumoDetectTheme') || 'light';
+            
+            setLanguage(savedLang);
+            setTheme(savedTheme);
+            setupEventListeners();
+        });
+
+        function setLanguage(lang) {
+            appState.currentLang = lang;
+            localStorage.setItem('pneumoDetectLang', lang);
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            
+            document.querySelectorAll('.lang-toggle button').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+                btn.setAttribute('aria-pressed', btn.getAttribute('data-lang') === lang ? 'true' : 'false');
+            });
+            
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    element.textContent = translations[lang][key];
+                }
+            });
+
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                if (translations[lang] && translations[lang][key]) {
+                    element.placeholder = translations[lang][key];
+                }
+            });
+        }
+
+        function setTheme(theme) {
+            appState.isDarkMode = theme === 'dark';
+            localStorage.setItem('pneumoDetectTheme', theme);
+            document.documentElement.setAttribute('data-theme', theme);
+            
+            const themeIcon = document.getElementById('theme-icon');
+            themeIcon.className = appState.isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+            
+            const themeToggle = document.getElementById('theme-toggle');
+            themeToggle.setAttribute('aria-label', appState.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+
+        function toggleTheme() {
+            setTheme(appState.isDarkMode ? 'light' : 'dark');
+        }
+
+        function showNotification(message, type = 'info', title = '') {
+            const container = document.getElementById('notification-container');
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = type === 'error' ? 'fa-exclamation-circle' : (type === 'success' ? 'fa-check-circle' : 'fa-info-circle');
+            
+            notification.innerHTML = `
+                <i class="fas ${icon}"></i>
+                <div class="notification-content">
+                    ${title ? `<div class="notification-title">${title}</div>` : ''}
+                    <div class="notification-message">${message}</div>
+                </div>
+                <i class="fas fa-times notification-close" onclick="this.parentElement.remove()"></i>
+            `;
+            
+            container.appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
+        }
+
+        function setupEventListeners() {
+            const form = document.getElementById('login-form');
+            const passwordInput = document.getElementById('login-password');
+            const toggleBtn = document.getElementById('toggle-password');
+            const loginBtn = document.getElementById('login-btn');
+            const errorDiv = document.getElementById('login-error');
+            const attemptFeedback = document.getElementById('attempt-feedback');
+            const themeToggle = document.getElementById('theme-toggle');
+
+            // Theme toggle
+            themeToggle.addEventListener('click', toggleTheme);
+
+            // Password visibility toggle
+            toggleBtn?.addEventListener('click', () => {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                toggleBtn.innerHTML = type === 'password' 
+                    ? '<i class="fas fa-eye"></i>' 
+                    : '<i class="fas fa-eye-slash"></i>';
+                toggleBtn.setAttribute('aria-pressed', type === 'text');
+            });
+
+            // Form submission
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const username = document.getElementById('login-username').value.trim();
+                const password = document.getElementById('login-password').value;
+                const rememberMe = document.getElementById('remember-me').checked;
+                
+                // Hide previous errors
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                    errorDiv.textContent = '';
+                }
+                
+                if (!username || !password) {
+                    showNotification(t('login_fill_fields'), 'error');
+                    return;
+                }
+                
+                // Check if account is locked
+                if (appState.loginAttempts >= appState.maxLoginAttempts) {
+                    showNotification(t('error_account_locked'), 'error');
+                    attemptFeedback.style.display = 'flex';
+                    document.getElementById('attempt-text').textContent = t('error_account_locked');
+                    loginBtn.disabled = true;
+                    return;
+                }
+                
+                // Show loading state
+                const originalBtnContent = loginBtn.innerHTML;
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '<span class="loading-spinner"></span> جاري التحقق...';
+
+                try {
+                    // Get CSRF token from cookie or meta tag
+                    const csrfToken = document.querySelector('[name="csrf_token"]')?.value || 
+                                     document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1] || '';
+                    
+                    // Make real API call
+                    const response = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrfToken || '',
+                            'XSRF-TOKEN': csrfToken || ''
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            username: username,
+                            password: password,
+                            remember_me: rememberMe
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    console.log('Login response:', response.status, result);
+                    
+                    if (response.ok && result.success) {
+                        showNotification(t('success_login'), 'success');
+                        // Reset login attempts on successful login
+                        appState.loginAttempts = 0;
+                        localStorage.setItem('loginAttempts', '0');
+                        
+                        // Get user role from response data
+                        const userRole = result.data?.role || 'patient';
+                        console.log('User role detected:', userRole);
+                        
+                        setTimeout(() => {
+                            // Redirect to dashboard based on user role
+                            const redirectUrl = userRole === 'doctor' ? '/doctor' : 
+                                              userRole === 'admin' ? '/admin' : '/patient';
+                            console.log('Redirecting to:', redirectUrl);
+                            window.location.href = redirectUrl;
+                        }, 1000);
+                    } else {
+                        // Increment login attempts
+                        appState.loginAttempts++;
+                        localStorage.setItem('loginAttempts', appState.loginAttempts.toString());
+                        
+                        const errorMsg = result.message || t('error_invalid_credentials');
+                        
+                        // Show attempt feedback
+                        if (appState.loginAttempts >= appState.maxLoginAttempts) {
+                            attemptFeedback.style.display = 'flex';
+                            document.getElementById('attempt-text').textContent = t('error_account_locked');
+                            loginBtn.disabled = true;
+                            showNotification(t('error_account_locked'), 'error');
+                        } else {
+                            const remainingAttempts = appState.maxLoginAttempts - appState.loginAttempts;
+                            const attemptText = `${errorMsg} (${remainingAttempts} ${t('remaining_attempts')})`;
+                            showNotification(attemptText, 'error');
+                            
+                            attemptFeedback.style.display = 'flex';
+                            document.getElementById('attempt-text').textContent = attemptText;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    showNotification(error.message || t('error_network'), 'error');
+                } finally {
+                    // Restore button state if not locked
+                    if (appState.loginAttempts < appState.maxLoginAttempts) {
+                        loginBtn.disabled = false;
+                        loginBtn.innerHTML = originalBtnContent;
+                    }
+                }
+            });
+            
+            // Check for stored login attempts on page load
+            const storedAttempts = parseInt(localStorage.getItem('loginAttempts') || '0');
+            appState.loginAttempts = storedAttempts;
+            
+            if (appState.loginAttempts >= appState.maxLoginAttempts) {
+                attemptFeedback.style.display = 'flex';
+                document.getElementById('attempt-text').textContent = t('error_account_locked');
+                loginBtn.disabled = true;
+            }
+        }
+        
+        // Initialize theme and language on load
+            return translations[appState.currentLang][key] || key; 
+        }
+    </script>
+    <!-- Core JavaScript Module -->
+    <script src="{{ url_for('static', filename='core.js') }}"></script>
+    <script>
+        // Initialize PneumoApp on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.PneumoApp) {
+                PneumoApp.init();
+                PneumoApp.Theme.init();
+            }
+        });
+    </script>
+</body>
+</html>

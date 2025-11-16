@@ -1,0 +1,65 @@
+version: '3.9'
+
+services:
+  # خدمة التطبيق الرئيسي
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_ENV: production
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+      DATABASE_URI: postgresql://${DB_USER:-pneumodetect}:${DB_PASSWORD:-password}@db:5432/pneumodetect
+      HF_TOKEN: ${HF_TOKEN}
+      MODEL_REPO: dima806/chest_xray_pneumonia_detection
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      - db
+      - redis
+    networks:
+      - pneumodetect-network
+    restart: unless-stopped
+
+  # خدمة قاعدة البيانات
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER:-pneumodetect}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: pneumodetect
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pneumodetect-network
+    restart: unless-stopped
+
+  # خدمة Redis للـ caching
+  redis:
+    image: redis:7-alpine
+    networks:
+      - pneumodetect-network
+    restart: unless-stopped
+
+  # خدمة Nginx (اختيارية - للإنتاج)
+  # nginx:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./certs:/etc/nginx/certs:ro
+  #   depends_on:
+  #     - web
+  #   networks:
+  #     - pneumodetect-network
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  pneumodetect-network:
+    driver: bridge

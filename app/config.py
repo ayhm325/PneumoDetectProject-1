@@ -5,6 +5,14 @@
 import os
 from datetime import timedelta
 
+
+def _env_bool(name, default=False):
+    """Helper to parse boolean-like env vars."""
+    val = os.environ.get(name)
+    if val is None:
+        return default
+    return str(val).lower() in ('1', 'true', 'yes', 'on')
+
 class Config:
     """الإعدادات الأساسية المشتركة."""
     
@@ -28,15 +36,18 @@ class Config:
     
     # Flask-Login
     REMEMBER_COOKIE_DURATION = timedelta(days=7)
-    REMEMBER_COOKIE_SECURE = True
+    REMEMBER_COOKIE_SECURE = _env_bool('REMEMBER_COOKIE_SECURE', True)
     REMEMBER_COOKIE_HTTPONLY = True
-    REMEMBER_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_SAMESITE = os.environ.get('REMEMBER_COOKIE_SAMESITE', 'Lax')
+    REMEMBER_COOKIE_DOMAIN = os.environ.get('REMEMBER_COOKIE_DOMAIN', None)
     
     # Session
     PERMANENT_SESSION_LIFETIME = timedelta(hours=24)
-    SESSION_COOKIE_SECURE = True
+    # Allow overriding these via environment for flexible deployments.
+    SESSION_COOKIE_SECURE = _env_bool('SESSION_COOKIE_SECURE', False)
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
+    SESSION_COOKIE_DOMAIN = os.environ.get('SESSION_COOKIE_DOMAIN', None)  # Allow any host/IP
     
     # Pagination
     ITEMS_PER_PAGE = 20
@@ -50,12 +61,16 @@ class Config:
         'http://localhost:3000', 
         'http://localhost:5000',
         'http://127.0.0.1:5000',
-        'http://127.0.0.1:3000'
+        'http://127.0.0.1:3000',
+        'http://192.168.1.111:5000',
+        'http://192.168.1.111:3000'
     ]
     
     # JSON
     JSON_SORT_KEYS = False
     JSONIFY_PRETTYPRINT_REGULAR = True
+    # Flask-WTF CSRF (enabled by default; tests may disable it in TestingConfig)
+    WTF_CSRF_ENABLED = True
 
 
 class DevelopmentConfig(Config):
@@ -66,6 +81,8 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_ECHO = True
     SESSION_COOKIE_SECURE = False
     REMEMBER_COOKIE_SECURE = False
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
 
 
 class TestingConfig(Config):
@@ -83,7 +100,14 @@ class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
     FLASK_ENV = 'production'
-    
+    # In production, recommend cookies usable across origins when necessary.
+    # Browsers require Secure=True when SAMESITE=None.
+    SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE', 'None')
+    SESSION_COOKIE_SECURE = _env_bool('SESSION_COOKIE_SECURE', True)
+    REMEMBER_COOKIE_SAMESITE = os.environ.get('REMEMBER_COOKIE_SAMESITE', 'None')
+    REMEMBER_COOKIE_SECURE = _env_bool('REMEMBER_COOKIE_SECURE', True)
+
+
     # يجب تعيين هذا في متغيرات البيئة
    # if not os.environ.get('SECRET_KEY'):
     #    raise ValueError('SECRET_KEY must be set in production')

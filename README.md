@@ -161,6 +161,7 @@ SKIP_ML=1 pytest
 - `SECURITY_ENHANCEMENTS.md` - إجراءات الأمان
 - `API_DOCUMENTATION.md` - توثيق الواجهات
 - `DEPLOYMENT.md` - تعليمات النشر
+- `DEPLOYMENT_COOKIES.md` - Production cookie & CSRF guidance (SameSite / Secure)
 - `DOCUMENTATION_INDEX.md` - فهرسة التوثيق الكاملة
 
 ---

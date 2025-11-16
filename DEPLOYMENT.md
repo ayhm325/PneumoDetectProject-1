@@ -346,3 +346,5 @@ python -c "from app import db; db.create_all()"
 ---
 
 **آخر تحديث:** 15 نوفمبر 2025
+
+> ملاحظة: راجع `DEPLOYMENT_COOKIES.md` لمتطلبات الكوكيز وHTTPS (SameSite/ Secure) في الإنتاج.

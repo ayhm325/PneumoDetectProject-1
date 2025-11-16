@@ -8,6 +8,7 @@ from flask_login import LoginManager, login_required, current_user
 from flask_migrate import Migrate
 from flask_cors import CORS
 from dotenv import load_dotenv
+from flask_wtf import CSRFProtect
 
 # تحميل متغيرات البيئة
 load_dotenv()
@@ -16,6 +17,7 @@ load_dotenv()
 db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
+csrf = CSRFProtect()
 
 # Redis Caching
 try:
@@ -97,6 +99,12 @@ def create_app(test_config=None):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+    # Initialize Flask-WTF CSRF protection (optional - will validate forms and headers)
+    try:
+        csrf.init_app(app)
+        app.logger.info('✅ CSRFProtect enabled')
+    except Exception:
+        app.logger.debug('CSRFProtect could not be initialized')
     
     # تفعيل CORS
     CORS(app, resources={
@@ -265,8 +273,11 @@ def create_app(test_config=None):
 
         # لحماية نقاط النهاية التي تسمح بتغيير الحالة، نتحقق من توكن CSRF
         if request.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
+            # If Flask-WTF CSRFProtect is active, let it perform validation
+            if 'csrf' in app.extensions:
+                return
             # استثناء endpoints معينة من التحقق
-            safe_endpoints = ['/health', '/health/ready']
+            safe_endpoints = ['/health', '/health/ready', '/api/analyze', '/api/analyze_and_save']
             if request.path in safe_endpoints:
                 return
 
@@ -334,8 +345,17 @@ def create_app(test_config=None):
             xsrf = session.get('csrf_token')
             if xsrf:
                 # Secure cookie في الإنتاج
-                secure_flag = False if app.debug else True
-                response.set_cookie('XSRF-TOKEN', xsrf, httponly=False, samesite='Lax', secure=secure_flag)
+                secure_flag = app.config.get('SESSION_COOKIE_SECURE', False)
+                samesite = app.config.get('SESSION_COOKIE_SAMESITE', 'Lax')
+                domain = app.config.get('SESSION_COOKIE_DOMAIN', None)
+                response.set_cookie(
+                    'XSRF-TOKEN',
+                    xsrf,
+                    httponly=False,
+                    samesite=samesite,
+                    secure=secure_flag,
+                    domain=domain
+                )
         except Exception:
             app.logger.debug('Could not set XSRF-TOKEN cookie')
 

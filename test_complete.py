@@ -5,9 +5,11 @@ Testing: Registration, Login, Role-based Access Control, API Endpoints
 """
 import requests
 import json
+import time
 
 BASE_URL = 'http://localhost:5000'
 RESULTS = []
+TIMESTAMP = str(int(time.time()))
 
 def test_case(name, condition, expected=True):
     """تسجيل نتيجة الاختبار"""
@@ -31,8 +33,8 @@ resp = session.get(f'{BASE_URL}/')
 csrf_token = session.cookies.get('XSRF-TOKEN')
 
 patient_data = {
-    'username': 'patient_final_test',
-    'email': 'patient@test.com',
+    'username': 'patient_test_' + TIMESTAMP,
+    'email': f'patient_{TIMESTAMP}@test.com',
     'password': 'Test12345678',
     'userType': 'patient'
 }
@@ -57,7 +59,7 @@ resp = login_session.get(f'{BASE_URL}/')
 csrf_token = login_session.cookies.get('XSRF-TOKEN')
 
 login_data = {
-    'username': 'patient_final_test',
+    'username': 'patient_test_' + TIMESTAMP,
     'password': 'Test12345678'
 }
 
@@ -107,8 +109,8 @@ resp = doc_session.get(f'{BASE_URL}/')
 csrf_token_doc = doc_session.cookies.get('XSRF-TOKEN')
 
 doctor_data = {
-    'username': 'doctor_final_test',
-    'email': 'doctor@test.com',
+    'username': 'doctor_test_' + TIMESTAMP,
+    'email': f'doctor_{TIMESTAMP}@test.com',
     'password': 'Test12345678',
     'userType': 'doctor'
 }
@@ -126,7 +128,7 @@ csrf_token_doc = doc_session.cookies.get('XSRF-TOKEN')
 
 resp = doc_session.post(
     f'{BASE_URL}/api/auth/login',
-    json={'username': 'doctor_final_test', 'password': 'Test12345678'},
+    json={'username': 'doctor_test_' + TIMESTAMP, 'password': 'Test12345678'},
     headers={'X-CSRF-Token': csrf_token_doc, 'XSRF-TOKEN': csrf_token_doc}
 )
 

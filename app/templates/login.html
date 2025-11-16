@@ -751,17 +751,17 @@
                         appState.loginAttempts = 0;
                         localStorage.setItem('loginAttempts', '0');
                         
-                        // Get user role from response data
-                        const userRole = result.data?.role || 'patient';
-                        console.log('User role detected:', userRole);
-                        
+                        // Prefer server-provided redirect_url for a professional flow
+                        const serverRedirect = result.data?.redirect_url;
+                        const fallbackRedirect = result.data?.role === 'doctor' ? '/doctor' : 
+                                                 result.data?.role === 'admin' ? '/admin' : '/patient';
+                        const redirectUrl = serverRedirect || fallbackRedirect;
+                        console.log('Redirecting to (server-guided):', redirectUrl);
+
+                        // Use replace() to avoid polluting browser history (professional UX)
                         setTimeout(() => {
-                            // Redirect to dashboard based on user role
-                            const redirectUrl = userRole === 'doctor' ? '/doctor' : 
-                                              userRole === 'admin' ? '/admin' : '/patient';
-                            console.log('Redirecting to:', redirectUrl);
-                            window.location.href = redirectUrl;
-                        }, 1000);
+                            window.location.replace(redirectUrl);
+                        }, 600);
                     } else {
                         // Increment login attempts
                         appState.loginAttempts++;

@@ -153,13 +153,21 @@ def login():
         # تسجيل الدخول بنجاح
         login_user(user, remember=remember_me)
         logger.info(f"دخول ناجح: {username}")
-        
+        # Determine redirect URL server-side for a clean professional flow
+        if user.role == 'doctor':
+            redirect_url = '/doctor'
+        elif user.role == 'admin':
+            redirect_url = '/admin'
+        else:
+            redirect_url = '/patient'
+
         response, code = APIResponse.success(
             data={
                 'username': user.username,
                 'user_id': user.id,
                 'role': user.role,
-                'email': user.email
+                'email': user.email,
+                'redirect_url': redirect_url
             },
             message='تم تسجيل الدخول بنجاح'
         )

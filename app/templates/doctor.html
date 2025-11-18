@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="لوحة الطبيب - PneumoDetect، مراجعة وتقييم تحاليل الأشعة السينية">
     <title data-i18n="doctor_dashboard_title">لوحة الطبيب - PneumoDetect</title>
+        <link rel="canonical" href="{{ request.url }}">
+        <meta property="og:title" content="PneumoDetect — لوحة الطبيب">
+        <meta property="og:description" content="لوحة الطبيب - مراجعة وتقييم تحاليل الأشعة السينية">
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="{{ request.url }}">
+        <meta property="og:image" content="{{ url_for('static', filename='assets/images/og-image.png') }}">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="PneumoDetect — لوحة الطبيب">
+        <meta name="twitter:description" content="لوحة الطبيب - مراجعة وتقييم تحاليل الأشعة السينية">
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": "PneumoDetect - لوحة الطبيب",
+            "description": "مراجعة وتقييم تحاليل الأشعة السينية باستخدام أدوات مساعدة للطبيب",
+            "url": "{{ request.url }}"
+        }
+        </script>
     
     <!-- External Resources -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -105,14 +123,23 @@
             border-radius: 50%;
             transition: var(--transition);
         }
-        .theme-toggle:hover { background-color: rgba(0, 0, 0, 0.1); }
+        .theme-toggle:hover { 
+            background-color: var(--light-section-bg); 
+            transform: rotate(20deg);
+        }
 
         .lang-toggle {
             position: relative;
-            background-color: #e2e8f0;
+            background-color: var(--light-section-bg);
             border-radius: 50px;
             padding: 4px;
             display: flex;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: var(--transition);
+        }
+        .lang-toggle:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
         }
         .lang-toggle button {
             background: none;
@@ -133,13 +160,22 @@
             height: calc(100% - 8px);
             background-color: var(--primary-color);
             border-radius: 50px;
-            transition: var(--transition);
+            transition: all 0.3s ease;
             z-index: 1;
+            width: calc(50% - 4px);
         }
-        [dir="rtl"] .lang-toggle .indicator { right: 4px; width: calc(50% - 4px); }
-        [dir="rtl"] .lang-toggle button[data-lang="en"].active ~ .indicator { transform: translateX(-100%); }
-        [dir="ltr"] .lang-toggle .indicator { left: 4px; width: calc(50% - 4px); }
-        [dir="ltr"] .lang-toggle button[data-lang="ar"].active ~ .indicator { transform: translateX(100%); }
+        [dir="rtl"] .lang-toggle .indicator { 
+            right: 4px; 
+        }
+        [dir="rtl"] .lang-toggle button[data-lang="en"].active ~ .indicator { 
+            transform: translateX(-100%); 
+        }
+        [dir="ltr"] .lang-toggle .indicator { 
+            left: 4px; 
+        }
+        [dir="ltr"] .lang-toggle button[data-lang="ar"].active ~ .indicator { 
+            transform: translateX(100%); 
+        }
 
         .user-info-section {
             display: flex;
@@ -368,6 +404,19 @@
             transition: var(--transition);
             font-size: 0.9rem;
         }
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 122, 122, 0.2);
+        }
+        .btn-secondary {
+            background-color: var(--gray-color);
+            color: var(--white-color);
+        }
         .btn-approve {
             background-color: var(--success-color);
             color: var(--white-color);
@@ -523,10 +572,6 @@
     </style>
 </head>
 <body role="application">
-    <!-- Skip to Main Content -->
-    <a href="#main-content" class="skip-to-main" aria-label="اذهب إلى المحتوى الرئيسي">
-        <span data-i18n="skip_to_main">اذهب إلى المحتوى الرئيسي</span>
-    </a>
 
     <!-- Notification Container -->
     <div class="notification-container" id="notification-container"></div>
@@ -538,9 +583,16 @@
             <h1>PneumoDetect</h1>
         </div>
         <div class="header-actions">
+            <a href="/" class="btn btn-primary" aria-label="الرئيسية">
+                <i class="fas fa-home"></i> 
+                <span data-i18n="home_btn">الرئيسية</span>
+            </a>
             <button class="theme-toggle" id="theme-toggle" aria-label="تبديل الوضع الليلي">
                 <i class="fas fa-moon" id="theme-icon"></i>
             </button>
+                <button class="theme-toggle" id="print-btn" aria-label="طباعة الصفحة">
+                    <i class="fas fa-print"></i>
+                </button>
             <div class="lang-toggle" role="group" aria-label="تغيير اللغة">
                 <button onclick="setLanguage('ar')" data-lang="ar" class="active" aria-pressed="true">AR</button>
                 <button onclick="setLanguage('en')" data-lang="en" aria-pressed="false">EN</button>
@@ -567,10 +619,60 @@
                 <h2 data-i18n="doctor_panel_title">📊 التحاليل المعلقة</h2>
                 <p data-i18n="doctor_panel_description">مراجعة وتقييم التحاليل المنتظرة التي تحتاج إلى رأي طبي.</p>
             </div>
-            <a href="index.html#analysis" class="btn btn-primary" aria-label="ابدأ تحليل جديد">
-                <i class="fas fa-microscope"></i> 
+            <button id="doctor-new-analysis-btn" class="btn btn-primary" aria-label="ابدأ تحليل جديد">
+                <i class="fas fa-microscope"></i>
                 <span data-i18n="new_analysis_btn">تحليل جديد</span>
-            </a>
+            </button>
+            <!-- Hidden file input to trigger analysis from doctor page -->
+            <input type="file" id="doctor-image-input" accept="image/jpeg,image/png" style="display: none;" />
+        </section>
+
+        <!-- Analysis Panel for Doctor -->
+        <section id="analysis-panel" style="margin-bottom: 30px; display: none;" aria-live="polite">
+            <div class="analysis-modal-content" style="background: var(--white-color); border-radius: var(--border-radius); padding: 25px; box-shadow: var(--box-shadow);">
+                
+                <!-- Upload Area -->
+                <div id="upload-area-doctor" class="upload-area" style="text-align: center; padding: 40px 20px; border: 2px dashed var(--gray-color); border-radius: 12px; cursor: pointer;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;"><i class="fas fa-cloud-upload-alt"></i></div>
+                    <h3>اسحب الصورة هنا أو انقر للتحميل</h3>
+                    <p style="color: var(--gray-color);">الصيغ المدعومة: JPG, PNG</p>
+                </div>
+
+                <!-- Preview Section -->
+                <div id="preview-section-doctor" style="display: none; margin-top: 20px;">
+                    <h4>معاينة الصورة</h4>
+                    <img id="preview-image-doctor" src="" alt="معاينة" style="max-width: 100%; max-height: 300px; border-radius: 8px; margin: 15px 0;">
+                    <button class="btn btn-secondary" onclick="resetUploadDoctor()" style="margin-top: 10px;">
+                        <i class="fas fa-redo"></i> تغيير الصورة
+                    </button>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading-state-doctor" style="display: none; text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 2rem; margin-bottom: 20px;"><i class="fas fa-spinner fa-spin"></i></div>
+                    <p style="font-size: 1.1rem; margin-bottom: 20px;">جاري التحليل...</p>
+                    <div style="background: #e6e6e6; height: 10px; border-radius: 6px; overflow: hidden; margin-bottom: 10px;">
+                        <div id="analysis-progress-bar-doctor" style="width: 0%; height: 100%; background: linear-gradient(90deg,#4361ee,#7209b7); transition: width 0.3s;"></div>
+                    </div>
+                    <p id="analysis-progress-text-doctor" style="font-size: 0.9rem; color: var(--gray-color);">0%</p>
+                </div>
+
+                <!-- Results Section -->
+                <div id="analysis-result-doctor" style="display: none;">
+                    <h4>نتائج التحليل</h4>
+                    <div id="result-card-content-doctor" style="margin-top: 20px;"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div id="action-buttons-doctor" style="display: none; margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="btn btn-secondary" onclick="resetUploadDoctor()">
+                        <i class="fas fa-redo"></i> تحليل صورة أخرى
+                    </button>
+                    <button class="btn btn-primary" onclick="startAnalysisDoctor()" style="display: none;" id="analyze-btn-doctor">
+                        <i class="fas fa-microscope"></i> تحليل الآن
+                    </button>
+                </div>
+            </div>
         </section>
 
         <section class="stats-grid" role="region" aria-label="إحصائيات الطبيب">
@@ -676,7 +778,7 @@
         // Translations
         const translations = {
             ar: {
-                skip_to_main: "اذهب إلى المحتوى الرئيسي",
+                home_btn: "الرئيسية",
                 doctor_panel_title: "📊 التحاليل المعلقة",
                 doctor_panel_description: "مراجعة وتقييم التحاليل المنتظرة التي تحتاج إلى رأي طبي.",
                 new_analysis_btn: "تحليل جديد",
@@ -706,11 +808,12 @@
                 success_review_saved: "تم حفظ التقييم بنجاح",
                 success_analysis_rejected: "تم رفض التحليل بنجاح",
                 error_saving_review: "فشل حفظ التقييم",
+                error_reject_requires_reason: "يجب إدخال سبب الرفض",
                 error_network: "فشل الاتصال بالخادم",
                 logout_btn: "خروج"
             },
             en: {
-                skip_to_main: "Go to main content",
+                home_btn: "Home",
                 doctor_panel_title: "📊 Pending Analyses",
                 doctor_panel_description: "Review and evaluate pending analyses that need a medical opinion.",
                 new_analysis_btn: "New Analysis",
@@ -740,6 +843,7 @@
                 success_review_saved: "Evaluation saved successfully",
                 success_analysis_rejected: "Analysis rejected successfully",
                 error_saving_review: "Failed to save evaluation",
+                error_reject_requires_reason: "You must provide a reason for rejection",
                 error_network: "Failed to connect to server",
                 logout_btn: "Logout"
             }
@@ -755,26 +859,58 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Load saved preferences
             const savedLang = localStorage.getItem('pneumoDetectLang') || 'ar';
             const savedTheme = localStorage.getItem('pneumoDetectTheme') || 'light';
             
+            // Apply saved preferences
             setLanguage(savedLang);
             setTheme(savedTheme);
+            
+            // Setup event listeners
             setupEventListeners();
+            
+            // Load initial data
             loadDoctorAnalyses();
         });
 
         function setLanguage(lang) {
             appState.currentLang = lang;
+            
+            // Save preference
             localStorage.setItem('pneumoDetectLang', lang);
+            
+            // Update document attributes
             document.documentElement.lang = lang;
             document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
             
+            // Update language toggle buttons
             document.querySelectorAll('.lang-toggle button').forEach(btn => {
-                btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
-                btn.setAttribute('aria-pressed', btn.getAttribute('data-lang') === lang ? 'true' : 'false');
+                const isActive = btn.getAttribute('data-lang') === lang;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             });
             
+            // Update indicator position
+            const indicator = document.querySelector('.lang-toggle .indicator');
+            const activeButton = document.querySelector(`.lang-toggle button[data-lang="${lang}"]`);
+            
+            if (indicator && activeButton) {
+                const langToggle = document.querySelector('.lang-toggle');
+                const buttonRect = activeButton.getBoundingClientRect();
+                const toggleRect = langToggle.getBoundingClientRect();
+                
+                // Calculate position relative to the toggle container
+                const leftPosition = buttonRect.left - toggleRect.left;
+                
+                // Adjust position based on padding (4px)
+                indicator.style.left = `${leftPosition}px`;
+                
+                // Force a quick reflow to ensure smooth transition
+                void indicator.offsetWidth;
+            }
+            
+            // Update all translatable elements
             document.querySelectorAll('[data-i18n]').forEach(element => {
                 const key = element.getAttribute('data-i18n');
                 if (translations[lang] && translations[lang][key]) {
@@ -782,6 +918,7 @@
                 }
             });
 
+            // Update placeholders
             document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
                 const key = element.getAttribute('data-i18n-placeholder');
                 if (translations[lang] && translations[lang][key]) {
@@ -792,14 +929,24 @@
 
         function setTheme(theme) {
             appState.isDarkMode = theme === 'dark';
+            
+            // Save preference
             localStorage.setItem('pneumoDetectTheme', theme);
+            
+            // Apply theme
             document.documentElement.setAttribute('data-theme', theme);
             
+            // Update theme icon
             const themeIcon = document.getElementById('theme-icon');
-            themeIcon.className = appState.isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+            if (themeIcon) {
+                themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
             
+            // Update aria-label
             const themeToggle = document.getElementById('theme-toggle');
-            themeToggle.setAttribute('aria-label', appState.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode');
+            if (themeToggle) {
+                themeToggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+            }
         }
 
         function toggleTheme() {
@@ -829,7 +976,9 @@
 
         function setupEventListeners() {
             const themeToggle = document.getElementById('theme-toggle');
-            themeToggle.addEventListener('click', toggleTheme);
+            if (themeToggle) {
+                themeToggle.addEventListener('click', toggleTheme);
+            }
         }
 
         function handleLogout() {
@@ -908,38 +1057,6 @@
             }
         }
 
-        function generateMockData(search, status, page) {
-            // This function is now deprecated and only kept for backward compatibility
-            return { items: [], pagination: { page: 1, per_page: 9, total: 0, pages: 1 } };
-        }
-            
-            // Filter by search and status
-            let filteredItems = allItems;
-            if (search) {
-                filteredItems = allItems.filter(item => 
-                    item.patient_username.toLowerCase().includes(search.toLowerCase())
-                );
-            }
-            if (status && status !== 'all') {
-                filteredItems = filteredItems.filter(item => item.review_status === status);
-            }
-            
-            // Paginate
-            const startIndex = (page - 1) * appState.itemsPerPage;
-            const endIndex = startIndex + appState.itemsPerPage;
-            const paginatedItems = filteredItems.slice(startIndex, endIndex);
-            
-            return {
-                items: paginatedItems,
-                pagination: {
-                    page: page,
-                    per_page: appState.itemsPerPage,
-                    total: filteredItems.length,
-                    pages: Math.ceil(filteredItems.length / appState.itemsPerPage)
-                }
-            };
-        }
-
         function displayAnalyses(analyses) {
             const container = document.getElementById('analyses-list');
             container.innerHTML = analyses.map((analysis, index) => `
@@ -960,7 +1077,7 @@
 
                     <div class="analysis-content">
                         <div class="image-section">
-                            <img src="${analysis.image_url}" alt="صورة أشعة سينية" onerror="this.onerror=null;this.src='https://picsum.photos/seed/placeholder/400/300.jpg';">
+                            <img data-src="${analysis.image_url}" src="/static/assets/images/placeholder-xray.svg" class="progressive-img" alt="صورة أشعة سينية" onerror="this.onerror=null;this.src='/static/assets/images/placeholder-xray.svg';">
                         </div>
                         <div class="details-section">
                             <div class="detail-row">
@@ -1091,15 +1208,34 @@
             }
 
             try {
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
+                const analysisId = appState.currentAnalysisId;
+                if (!analysisId) throw new Error('Missing analysis id');
+
+                const res = await fetch(`/api/doctor/review/${analysisId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': getCsrfToken()
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ notes: reason, status: 'rejected' })
+                });
+
+                if (!res.ok) {
+                    let errMsg = t('error_network');
+                    try {
+                        const payload = await res.json();
+                        if (payload && payload.message) errMsg = payload.message;
+                    } catch (e) {}
+                    throw new Error(errMsg);
+                }
+
                 showNotification(t('success_analysis_rejected'), 'success');
                 closeRejectModal();
                 loadDoctorAnalyses(appState.currentPage);
             } catch (error) {
                 console.error('Error rejecting analysis:', error);
-                showNotification(t('error_network'), 'error');
+                showNotification(error.message || t('error_network'), 'error');
             }
         }
 
@@ -1111,15 +1247,31 @@
             const status = 'reviewed'; // Default to approved
 
             try {
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
+                const res = await fetch(`/api/doctor/review/${analysisId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': getCsrfToken()
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ notes: notes, status: status })
+                });
+
+                if (!res.ok) {
+                    let errMsg = t('error_saving_review') || t('error_network');
+                    try {
+                        const payload = await res.json();
+                        if (payload && payload.message) errMsg = payload.message;
+                    } catch (e) {}
+                    throw new Error(errMsg);
+                }
+
                 showNotification(t('success_review_saved'), 'success');
                 event.target.reset();
                 loadDoctorAnalyses(appState.currentPage);
             } catch (error) {
                 console.error('Error submitting review:', error);
-                showNotification(t('error_network'), 'error');
+                showNotification(error.message || t('error_network'), 'error');
             }
         }
         
@@ -1157,7 +1309,194 @@
                 PneumoApp.init();
                 PneumoApp.Theme.init();
             }
+            
+            // Wire doctor page "New Analysis" button
+            const btn = document.getElementById('doctor-new-analysis-btn');
+            const panel = document.getElementById('analysis-panel');
+            const uploadArea = document.getElementById('upload-area-doctor');
+            
+            if (btn && panel) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    panel.style.display = 'block';
+                    panel.scrollIntoView({ behavior: 'smooth' });
+                });
+            }
+
+            if (uploadArea) {
+                uploadArea.addEventListener('click', () => {
+                    const input = document.getElementById('doctor-image-input');
+                    if (input) input.click();
+                });
+
+                // Drag and drop
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('drag-over');
+                });
+
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('drag-over');
+                });
+
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('drag-over');
+                    const file = e.dataTransfer.files[0];
+                    if (file) handleFileSelectDoctor(file);
+                });
+            }
+
+            // File input listener
+            const imageInput = document.getElementById('doctor-image-input');
+            if (imageInput) {
+                imageInput.addEventListener('change', (e) => {
+                    if (e.target.files[0]) handleFileSelectDoctor(e.target.files[0]);
+                });
+            }
         });
+
+        // Doctor page analysis functions
+        let selectedFileDoctor = null;
+
+        function resetUploadDoctor() {
+            selectedFileDoctor = null;
+            const uploadArea = document.getElementById('upload-area-doctor');
+            const previewSection = document.getElementById('preview-section-doctor');
+            const resultSection = document.getElementById('analysis-result-doctor');
+            const actionButtons = document.getElementById('action-buttons-doctor');
+            const analyzeBtn = document.getElementById('analyze-btn-doctor');
+            const imageInput = document.getElementById('doctor-image-input');
+
+            if (uploadArea) uploadArea.style.display = 'block';
+            if (previewSection) previewSection.style.display = 'none';
+            if (resultSection) resultSection.style.display = 'none';
+            if (actionButtons) actionButtons.style.display = 'none';
+            if (analyzeBtn) analyzeBtn.style.display = 'none';
+            if (imageInput) imageInput.value = '';
+        }
+
+        function handleFileSelectDoctor(file) {
+            if (!['image/jpeg', 'image/png'].includes(file.type)) {
+                alert('الرجاء اختيار صورة JPEG أو PNG');
+                return;
+            }
+
+            if (file.size > 50 * 1024 * 1024) {
+                alert('الملف كبير جداً (الحد الأقصى: 50 MB)');
+                return;
+            }
+
+            selectedFileDoctor = file;
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const uploadArea = document.getElementById('upload-area-doctor');
+                const previewSection = document.getElementById('preview-section-doctor');
+                const previewImage = document.getElementById('preview-image-doctor');
+                const analyzeBtn = document.getElementById('analyze-btn-doctor');
+
+                if (previewImage) previewImage.src = e.target.result;
+                if (uploadArea) uploadArea.style.display = 'none';
+                if (previewSection) previewSection.style.display = 'block';
+                if (analyzeBtn) analyzeBtn.style.display = 'inline-flex';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function startAnalysisDoctor() {
+            if (!selectedFileDoctor) return;
+
+            const previewSection = document.getElementById('preview-section-doctor');
+            const loadingState = document.getElementById('loading-state-doctor');
+            const progressBar = document.getElementById('analysis-progress-bar-doctor');
+            const progressText = document.getElementById('analysis-progress-text-doctor');
+            const resultSection = document.getElementById('analysis-result-doctor');
+            const actionButtons = document.getElementById('action-buttons-doctor');
+            const analyzeBtn = document.getElementById('analyze-btn-doctor');
+
+            if (previewSection) previewSection.style.display = 'none';
+            if (loadingState) loadingState.style.display = 'block';
+            if (resultSection) resultSection.style.display = 'none';
+            if (actionButtons) actionButtons.style.display = 'none';
+            if (analyzeBtn) analyzeBtn.style.display = 'none';
+
+            try {
+                // Update progress
+                if (progressBar) progressBar.style.width = '10%';
+                if (progressText) progressText.textContent = '10%';
+
+                const formData = new FormData();
+                formData.append('file', selectedFileDoctor);
+
+                if (progressBar) progressBar.style.width = '30%';
+                if (progressText) progressText.textContent = '30%';
+
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+
+                if (progressBar) progressBar.style.width = '70%';
+                if (progressText) progressText.textContent = '70%';
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'فشل التحليل');
+                }
+
+                const result = await response.json();
+                if (progressBar) progressBar.style.width = '100%';
+                if (progressText) progressText.textContent = '100%';
+
+                // Display result
+                setTimeout(() => {
+                    if (loadingState) loadingState.style.display = 'none';
+                    if (resultSection) {
+                        const cardContent = document.getElementById('result-card-content-doctor');
+                        if (cardContent && result.data) {
+                            const data = result.data;
+                            const resultBadge = data.result === 'PNEUMONIA' ? 
+                                '<p style="color: #dc3545; font-weight: bold;">🔴 إيجابي (التهاب رئوي)</p>' :
+                                '<p style="color: #28a745; font-weight: bold;">🟢 سلبي (بدون التهاب)</p>';
+
+                            cardContent.innerHTML = `
+                                <div style="margin-bottom: 20px;">
+                                    <label style="font-weight: 600;">النتيجة:</label>
+                                    ${resultBadge}
+                                </div>
+                                <div style="margin-bottom: 20px;">
+                                    <label style="font-weight: 600;">درجة الثقة:</label>
+                                    <div style="background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden; margin: 8px 0;">
+                                        <div style="width: ${data.confidence}%; height: 100%; background: linear-gradient(90deg,#4361ee,#7209b7);"></div>
+                                    </div>
+                                    <p style="font-size: 0.9rem;">${data.confidence.toFixed(1)}%</p>
+                                </div>
+                                <div style="margin-bottom: 20px;">
+                                    <label style="font-weight: 600;">الشرح:</label>
+                                    <p>${data.explanation || 'تم تحليل الصورة بواسطة نموذج الذكاء الاصطناعي'}</p>
+                                </div>
+                                ${data.saliency_url ? `
+                                <div style="margin-bottom: 20px;">
+                                    <label style="font-weight: 600;">خريطة الإبراز:</label>
+                                    <img data-src="${data.saliency_url}" src="/static/assets/images/placeholder-xray.svg" class="progressive-img" alt="خريطة الإبراز" style="max-width: 100%; border-radius: 8px; margin-top: 10px;">
+                                </div>
+                                ` : ''}
+                            `;
+                        }
+                        resultSection.style.display = 'block';
+                        if (actionButtons) actionButtons.style.display = 'flex';
+                    }
+                }, 500);
+
+            } catch (error) {
+                if (loadingState) loadingState.style.display = 'none';
+                alert('❌ خطأ: ' + error.message);
+                console.error('Analysis error:', error);
+            }
+        }
     </script>
 </body>
 </html>

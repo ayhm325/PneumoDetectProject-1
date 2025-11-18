@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="لوحة المريض - PneumoDetect، عرض وإدارة تحاليل الأشعة السينية">
     <title data-i18n="patient_dashboard_title">لوحة المريض - PneumoDetect</title>
+    <link rel="canonical" href="{{ request.url }}">
+    <meta property="og:title" content="PneumoDetect — لوحة المريض">
+    <meta property="og:description" content="لوحة المريض - عرض وإدارة تحاليل الأشعة السينية">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:image" content="{{ url_for('static', filename='assets/images/og-image.png') }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="PneumoDetect — لوحة المريض">
+    <meta name="twitter:description" content="لوحة المريض - عرض وإدارة تحاليل الأشعة السينية">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "PneumoDetect - لوحة المريض",
+        "description": "عرض وإدارة تحاليل الأشعة السينية باستخدام نموذج ذكاء اصطناعي",
+        "url": "{{ request.url }}"
+    }
+    </script>
     
     <!-- External Resources -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -34,6 +52,8 @@
             --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
             --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        /* startAnalysisPatient handled in script block (moved to avoid JS inside <style>) */
 
         [data-theme="dark"] {
             --primary-color: #00a8a8;
@@ -94,6 +114,24 @@
         }
 
         .header-actions { display: flex; align-items: center; gap: 20px; }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--dark-color);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 50px;
+            transition: var(--transition);
+        }
+
+        .nav-link:hover {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+            text-decoration: none;
+        }
 
         .theme-toggle {
             background: none;
@@ -439,14 +477,267 @@
             .filters { flex-direction: column; align-items: stretch; }
             .filter-group { width: 100%; }
         }
+
+        /* --- Upload Modal Styles --- */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background-color: var(--white-color);
+            border-radius: var(--border-radius);
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--dark-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--gray-color);
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            color: var(--dark-color);
+        }
+
+        .modal-body {
+            padding: 25px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        /* --- Upload Area Styles --- */
+        .upload-area {
+            border: 3px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background-color: rgba(0, 122, 122, 0.05);
+        }
+
+        .upload-area:hover {
+            background-color: rgba(0, 122, 122, 0.1);
+            border-color: var(--primary-hover);
+        }
+
+        .upload-area.dragover {
+            background-color: rgba(0, 122, 122, 0.15);
+            border-color: var(--primary-hover);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .upload-area h3 {
+            margin: 15px 0 10px;
+            color: var(--dark-color);
+        }
+
+        .upload-area p {
+            color: var(--gray-color);
+            margin-bottom: 15px;
+        }
+
+        /* --- Preview & Results Styles --- */
+        .preview-container {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            background-color: var(--light-section-bg);
+            padding: 15px;
+            text-align: center;
+        }
+
+        .analysis-results-container {
+            background-color: var(--light-section-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+        }
+
+        .result-display {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .result-status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            width: fit-content;
+            margin: 0 auto;
+        }
+
+        .result-status-badge.pneumonia {
+            background-color: rgba(220, 53, 69, 0.2);
+            color: var(--error-color);
+        }
+
+        .result-status-badge.normal {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: var(--success-color);
+        }
+
+        .result-details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .result-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .result-detail label {
+            font-weight: 600;
+            color: var(--dark-color);
+            font-size: 0.9rem;
+        }
+
+        .result-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .confidence-bar-large {
+            height: 12px;
+            background-color: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .confidence-fill-large {
+            height: 100%;
+            background: linear-gradient(90deg, var(--tech-accent-color), #7209b7);
+            border-radius: 6px;
+            transition: width 0.5s ease-out;
+        }
+
+        .saliency-section {
+            background-color: var(--white-color);
+            padding: 15px;
+            border-radius: var(--border-radius);
+        }
+
+        .saliency-section h4 {
+            margin: 0 0 10px;
+            color: var(--dark-color);
+        }
+
+        /* --- Loading States --- */
+        .loading-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(0, 122, 122, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+            color: var(--gray-color);
+        }
+
+        /* --- Responsive Modal --- */
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                max-height: 95vh;
+            }
+
+            .modal-footer {
+                flex-direction: column;
+            }
+
+            .modal-footer .btn {
+                width: 100%;
+            }
+
+            .result-details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body role="application">
-    <!-- Skip to Main Content -->
-    <a href="#main-content" class="skip-to-main" aria-label="اذهب إلى المحتوى الرئيسي">
-        <span data-i18n="skip_to_main">اذهب إلى المحتوى الرئيسي</span>
-    </a>
-
     <!-- Notification Container -->
     <div class="notification-container" id="notification-container"></div>
 
@@ -457,8 +748,15 @@
             <h1>PneumoDetect</h1>
         </div>
         <div class="header-actions">
+            <a href="/" class="nav-link" aria-label="الرئيسية">
+                <i class="fas fa-home"></i>
+                <span data-i18n="nav_home">الرئيسية</span>
+            </a>
             <button class="theme-toggle" id="theme-toggle" aria-label="تبديل الوضع الليلي">
                 <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+            <button class="theme-toggle" id="print-btn" aria-label="طباعة الصفحة">
+                <i class="fas fa-print"></i>
             </button>
             <div class="lang-toggle" role="group" aria-label="تغيير اللغة">
                 <button onclick="setLanguage('ar')" data-lang="ar" class="active" aria-pressed="true">AR</button>
@@ -468,7 +766,7 @@
             <div class="user-info-section">
                 <div class="user-badge">
                     <i class="fas fa-user-circle"></i> 
-                    <span id="current-user-info">المريض</span>
+                    <span id="current-user-info">{{ username }}</span>
                 </div>
                 <button class="btn btn-secondary" onclick="handleLogout()">
                     <i class="fas fa-sign-out-alt"></i> 
@@ -486,10 +784,10 @@
                 <h2 data-i18n="my_results_title">📋 سجل التحاليل الخاص بك</h2>
                 <p data-i18n="my_results_description">اعرض وتصفح جميع تحاليل الأشعة السينية التي قمت بإجرائها.</p>
             </div>
-            <a href="index.html#analysis" class="btn btn-primary" aria-label="ابدأ تحليل جديد">
+            <button id="open-upload-btn" class="btn btn-primary" aria-label="ابدأ تحليل جديد">
                 <i class="fas fa-plus-circle"></i> 
                 <span data-i18n="new_analysis_btn">تحليل جديد</span>
-            </a>
+            </button>
         </section>
 
         <!-- Statistics Grid -->
@@ -509,21 +807,21 @@
                 </div>
                 <div class="stat-info">
                     <h3 data-i18n="stat_pending_review">قيد المراجعة</h3>
-                    <div class="value" id="pending-count">0</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); color: var(--success);">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="stat-info">
-                    <h3 data-i18n="stat_reviewed">تم مراجعتها</h3>
-                    <div class="value" id="reviewed-count">0</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: var(--error);">
-                    <i class="fas fa-virus"></i>
+                                <div class="result-content">
+                                    <div class="result-image"><img data-src="${item.image_url}" src="/static/assets/images/placeholder-xray.svg" class="progressive-img" alt="صورة أشعة" onerror="this.onerror=null;this.src='/static/assets/images/placeholder-xray.svg';"></div>
+                                    <div class="result-details">
+                                        <div class="detail-row">
+                                            <div class="detail-label">النتيجة:</div>
+                                            <div class="detail-value">${item.result || item.model_result || 'N/A'}</div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <div class="detail-label">درجة الثقة:</div>
+                                            <div class="detail-value">${(item.confidence || 0).toFixed ? (item.confidence).toFixed(1) + '%' : item.confidence + '%'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
                 </div>
                 <div class="stat-info">
                     <h3 data-i18n="stat_pneumonia_cases">حالات الالتهاب</h3>
@@ -549,10 +847,6 @@
                     <option value="oldest" data-i18n="filter_oldest">الأقدم أولاً</option>
                 </select>
             </div>
-            <button class="btn btn-primary" onclick="loadPatientAnalyses()">
-                <i class="fas fa-search"></i> 
-                <span data-i18n="filter_search_btn">بحث</span>
-            </button>
         </section>
 
         <!-- Results List -->
@@ -565,21 +859,126 @@
             <i class="fas fa-inbox"></i>
             <h3 data-i18n="empty_state_title">لا توجد تحاليل حالياً</h3>
             <p data-i18n="empty_state_desc">لم تقم بإجراء أي تحاليل بعد. ابدأ بتحليل صورة جديدة الآن!</p>
-            <a href="index.html#analysis" class="btn btn-primary" aria-label="ابدأ أول تحليل">
+            <button onclick="openUploadModal()" class="btn btn-primary" aria-label="ابدأ أول تحليل">
                 <i class="fas fa-microscope"></i> 
                 <span data-i18n="start_first_analysis">ابدأ أول تحليل</span>
-            </a>
+            </button>
         </div>
 
         <!-- Pagination -->
         <div class="pagination" id="pagination" style="display: none;" role="navigation" aria-label="ترقيم الصفحات"></div>
     </main>
 
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 data-i18n="upload_title">تحميل وتحليل صورة جديدة</h2>
+                <button class="modal-close" onclick="closeUploadModal()" aria-label="إغلاق">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Upload Area -->
+                <div id="upload-area" class="upload-area">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h3 data-i18n="upload_prompt">اسحب الصورة هنا أو انقر للتحميل</h3>
+                    <p data-i18n="upload_formats">الصيغ المدعومة: JPG, PNG, GIF</p>
+                    <input type="file" id="image-input" accept=".jpg,.jpeg,.png,.gif" style="display: none;">
+                    <button class="btn btn-primary" onclick="triggerImageInput()">
+                        <i class="fas fa-folder-open"></i>
+                        <span data-i18n="browse_btn">استعراض الملفات</span>
+                    </button>
+                </div>
+
+                <!-- Recommended size hint -->
+                <p id="upload-hint" class="upload-hint" style="color:var(--gray-color); margin-top:8px;">مقترح: الحد الأدنى 224×224 بكسل</p>
+                <!-- Preview Section -->
+                <div id="preview-section" style="display: none;">
+                    <h3 data-i18n="preview_title">معاينة الصورة</h3>
+                    <div class="preview-container">
+                        <img id="preview-image" src="" alt="معاينة الصورة" style="max-width: 100%; max-height: 300px;">
+                    </div>
+                    <button class="btn btn-secondary" onclick="resetUpload()" style="margin-top: 10px;">
+                        <i class="fas fa-redo"></i>
+                        <span data-i18n="change_image">تغيير الصورة</span>
+                    </button>
+                </div>
+
+                <!-- Inline error area for upload/analysis -->
+                <div id="upload-error" class="upload-error" role="alert" aria-live="polite" style="display:none; color: #b00020; margin-top:10px;"></div>
+
+                <!-- Analysis Results Section -->
+                <div id="analysis-results" style="display: none;">
+                    <h3 data-i18n="analysis_results_title">نتائج التحليل</h3>
+                    <div class="analysis-results-container">
+                        <div class="result-display">
+                            <div class="result-status-badge" id="result-badge"></div>
+                            <div class="result-details-grid">
+                                <div class="result-detail">
+                                    <label data-i18n="result_analysis_label">النتيجة:</label>
+                                    <div id="result-value" class="result-value"></div>
+                                </div>
+                                <div class="result-detail">
+                                    <label data-i18n="result_confidence_label">درجة الثقة:</label>
+                                    <div id="confidence-value" class="result-value"></div>
+                                </div>
+                            </div>
+                            <div class="confidence-bar-large">
+                                <div id="confidence-fill-large" class="confidence-fill-large"></div>
+                            </div>
+                        </div>
+
+                        <!-- Saliency Map -->
+                        <div class="saliency-section" style="margin-top: 20px;">
+                            <h4 data-i18n="saliency_title">خريطة المناطق المهمة</h4>
+                            <img id="saliency-image" src="" alt="خريطة الإبراز" style="max-width: 100%; max-height: 300px; border-radius: 8px; margin-top: 10px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="retry-btn" class="btn btn-secondary" onclick="analyzeImage()" style="display: none;">
+                    <i class="fas fa-redo"></i>
+                    <span data-i18n="retry_btn">إعادة المحاولة</span>
+                </button>
+                <button class="btn btn-secondary" onclick="closeUploadModal()" id="cancel-btn">
+                    <i class="fas fa-times"></i>
+                    <span data-i18n="cancel_btn">إلغاء</span>
+                </button>
+                <button id="analyze-btn" class="btn btn-primary" onclick="analyzeImage()" style="display: none;">
+                    <i class="fas fa-microscope"></i>
+                    <span data-i18n="analyze_btn">تحليل الآن</span>
+                </button>
+                <button id="save-btn" class="btn btn-primary" onclick="saveAnalysisResult()" style="display: none;">
+                    <i class="fas fa-check"></i>
+                    <span data-i18n="save_analysis">حفظ النتائج</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // ========== Global Variables Initialization ==========
+        const appState = { 
+            currentLang: 'ar',
+            isDarkMode: false,
+            currentPage: 1,
+            itemsPerPage: 9,
+            totalPages: 0,
+            uploadListenerAttached: false  // Prevent duplicate listeners
+        };
+        
+        let currentAnalysisData = null;
+        let selectedFile = null;
+
         // Translations
         const translations = {
             ar: {
-                skip_to_main: "اذهب إلى المحتوى الرئيسي",
+                nav_home: "الرئيسية",
                 my_results_title: "📋 سجل التحاليل الخاص بك",
                 my_results_description: "اعرض وتصفح جميع تحاليل الأشعة السينية التي قمت بإجرائها.",
                 new_analysis_btn: "تحليل جديد",
@@ -600,12 +999,54 @@
                 start_first_analysis: "ابدأ أول تحليل",
                 view_details_btn: "عرض التفاصيل",
                 download_btn: "تحميل",
+                delete_btn: "حذف",
+                confirm_delete: "هل أنت متأكد من حذف هذا التحليل؟",
+                downloading: "جاري التحميل...",
+                deleting: "جاري الحذف...",
+                delete_success: "تم حذف التحليل بنجاح",
+                error_delete_failed: "فشل حذف التحليل",
+                analysis_details: "تفاصيل التحليل",
+                loading: "جاري التحميل...",
+                loaded_success: "تم تحميل التفاصيل بنجاح",
+                error_loading_details: "فشل تحميل التفاصيل",
+                close_btn: "إغلاق",
+                uploaded_at: "تاريخ الرفع:",
+                review_status_label: "حالة المراجعة:",
+                reviewed: "تمت المراجعة",
+                pending: "قيد الانتظار",
+                images: "الصور:",
                 logout_btn: "خروج",
                 error_loading_data: "فشل تحميل البيانات. يرجى المحاولة مرة أخرى.",
-                error_network: "فشل الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت."
+                error_network: "فشل الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.",
+                pagination_prev: "السابقة",
+                pagination_next: "التالية",
+                result_analysis_label: "النتيجة:",
+                result_confidence_label: "درجة الثقة:",
+                doctor_notes_label: "ملاحظات الطبيب:",
+                upload_title: "تحميل وتحليل صورة جديدة",
+                upload_prompt: "اسحب الصورة هنا أو انقر للتحميل",
+                upload_formats: "الصيغ المدعومة: JPG, PNG, GIF",
+                browse_btn: "استعراض الملفات",
+                preview_title: "معاينة الصورة",
+                change_image: "تغيير الصورة",
+                analysis_results_title: "نتائج التحليل",
+                saliency_title: "خريطة المناطق المهمة",
+                cancel_btn: "إلغاء",
+                analyze_btn: "تحليل الآن",
+                save_analysis: "حفظ النتائج",
+                error_invalid_format: "صيغة الملف غير مدعومة",
+                error_file_too_large: "الملف كبير جداً",
+                error_no_file: "لم يتم تحديد ملف",
+                error_no_analysis: "لا توجد نتائج لحفظ",
+                error_analysis_failed: "فشل التحليل",
+                error_save_failed: "فشل حفظ النتائج",
+                analyzing: "جاري التحليل...",
+                analysis_complete: "تم التحليل بنجاح",
+                saving_analysis: "جاري حفظ النتائج...",
+                analysis_saved_successfully: "تم حفظ النتائج بنجاح"
             },
             en: {
-                skip_to_main: "Go to main content",
+                nav_home: "Home",
                 my_results_title: "📋 Your Analysis History",
                 my_results_description: "View and browse all the X-ray analyses you have performed.",
                 new_analysis_btn: "New Analysis",
@@ -626,31 +1067,141 @@
                 start_first_analysis: "Start First Analysis",
                 view_details_btn: "View Details",
                 download_btn: "Download",
+                delete_btn: "Delete",
+                confirm_delete: "Are you sure you want to delete this analysis?",
+                downloading: "Downloading...",
+                deleting: "Deleting...",
+                delete_success: "Analysis deleted successfully",
+                error_delete_failed: "Failed to delete analysis",
+                analysis_details: "Analysis Details",
+                loading: "Loading...",
+                loaded_success: "Details loaded successfully",
+                error_loading_details: "Failed to load details",
+                close_btn: "Close",
+                uploaded_at: "Uploaded at:",
+                review_status_label: "Review Status:",
+                reviewed: "Reviewed",
+                pending: "Pending",
+                images: "Images:",
                 logout_btn: "Logout",
                 error_loading_data: "Failed to load data. Please try again.",
-                error_network: "Failed to connect to the server. Please check your internet connection."
+                error_network: "Failed to connect to the server. Please check your internet connection.",
+                pagination_prev: "Previous",
+                pagination_next: "Next",
+                result_analysis_label: "Result:",
+                result_confidence_label: "Confidence:",
+                doctor_notes_label: "Doctor Notes:",
+                upload_title: "Upload and Analyze New Image",
+                upload_prompt: "Drag image here or click to upload",
+                upload_formats: "Supported formats: JPG, PNG, GIF",
+                browse_btn: "Browse Files",
+                preview_title: "Image Preview",
+                change_image: "Change Image",
+                analysis_results_title: "Analysis Results",
+                saliency_title: "Areas of Interest Map",
+                cancel_btn: "Cancel",
+                analyze_btn: "Analyze Now",
+                save_analysis: "Save Results",
+                error_invalid_format: "Unsupported file format",
+                error_file_too_large: "File is too large",
+                error_no_file: "No file selected",
+                error_no_analysis: "No analysis results to save",
+                error_analysis_failed: "Analysis failed",
+                error_save_failed: "Failed to save results",
+                analyzing: "Analyzing...",
+                analysis_complete: "Analysis completed successfully",
+                saving_analysis: "Saving results...",
+                analysis_saved_successfully: "Results saved successfully"
             }
         };
 
-        const appState = { 
-            currentLang: 'ar',
-            isDarkMode: false,
-            currentPage: 1,
-            itemsPerPage: 9,
-            totalPages: 0
-        };
+        // --- Debug: global fetch interceptor to log requests and responses ---
+        (function() {
+            try {
+                const _fetch = window.fetch.bind(window);
+                window.fetch = async function(...args) {
+                    try {
+                        console.log('[debug-fetch] request:', args[0], args[1] && args[1].method, args[1] && args[1].headers);
+                        const res = await _fetch(...args);
+                        // clone response to read body without consuming original
+                        try {
+                            const clone = res.clone();
+                            clone.text().then(body => {
+                                console.log('[debug-fetch] response:', args[0], 'status:', res.status, 'body:', body.substring(0, 2000));
+                            }).catch(e => console.warn('[debug-fetch] response read failed', e));
+                        } catch (e) {
+                            console.warn('[debug-fetch] clone failed', e);
+                        }
+                        return res;
+                    } catch (err) {
+                        console.error('[debug-fetch] network error for', args[0], err);
+                        throw err;
+                    }
+                };
+            } catch (e) {
+                console.warn('Failed to install fetch interceptor', e);
+            }
+        })();
 
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('Patient page DOMContentLoaded');
+            
+            // 1. Initialize language and theme
             const savedLang = localStorage.getItem('pneumoDetectLang') || 'ar';
             const savedTheme = localStorage.getItem('pneumoDetectTheme') || 'light';
             
             setLanguage(savedLang);
             setTheme(savedTheme);
+            
+            // 2. Setup event listeners
             setupEventListeners();
+            
+            // 3. Setup upload button listener (with duplicate prevention)
+            const uploadBtn = document.getElementById('open-upload-btn');
+            if (uploadBtn && !appState.uploadListenerAttached) {
+                // Remove any existing listener to prevent duplicates
+                uploadBtn.removeEventListener('click', openUploadModal);
+                uploadBtn.addEventListener('click', openUploadModal);
+                appState.uploadListenerAttached = true;
+                console.log('Upload button listener attached (duplicates prevented)');
+            } else if (uploadBtn && appState.uploadListenerAttached) {
+                console.log('Upload button listener already attached, skipping');
+            } else {
+                console.warn('Upload button not found');
+            }
+            
+            // 4. Load patient analyses
             loadPatientAnalyses();
+
+            // Small retry: if results don't appear in a short time, try again and log to debug panel
+            setTimeout(() => {
+                try {
+                    const resultsList = document.getElementById('results-list');
+                    const emptyState = document.getElementById('empty-state');
+                    const debugLogs = document.getElementById('debug-logs');
+                    const hasResults = resultsList && resultsList.children && resultsList.children.length > 0 && resultsList.innerText.trim() !== '';
+                    if (!hasResults) {
+                        if (debugLogs) {
+                            const entry = document.createElement('div');
+                            entry.style.marginBottom = '6px';
+                            entry.style.whiteSpace = 'pre-wrap';
+                            entry.innerHTML = `<span style="color:#0b5fff">[info]</span> Retrying loadPatientAnalyses() (no results detected)`;
+                            debugLogs.appendChild(entry);
+                        }
+                        loadPatientAnalyses();
+                    }
+                } catch (e) {
+                    console.warn('Retry loadPatientAnalyses failed', e);
+                }
+            }, 1500);
         });
 
         function setLanguage(lang) {
+            if (!appState) {
+                console.error('appState not initialized');
+                return;
+            }
+            
             appState.currentLang = lang;
             localStorage.setItem('pneumoDetectLang', lang);
             document.documentElement.lang = lang;
@@ -663,30 +1214,53 @@
             
             document.querySelectorAll('[data-i18n]').forEach(element => {
                 const key = element.getAttribute('data-i18n');
-                if (translations[lang] && translations[lang][key]) {
+                if (translations && translations[lang] && translations[lang][key]) {
                     element.textContent = translations[lang][key];
                 }
             });
         }
 
         function setTheme(theme) {
+            if (!appState) {
+                console.error('appState not initialized');
+                return;
+            }
+            
             appState.isDarkMode = theme === 'dark';
             localStorage.setItem('pneumoDetectTheme', theme);
             document.documentElement.setAttribute('data-theme', theme);
             
             const themeIcon = document.getElementById('theme-icon');
-            themeIcon.className = appState.isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+            if (themeIcon) {
+                themeIcon.className = appState.isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+            } else {
+                console.warn('Theme icon not found');
+            }
             
             const themeToggle = document.getElementById('theme-toggle');
-            themeToggle.setAttribute('aria-label', appState.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode');
+            if (themeToggle) {
+                themeToggle.setAttribute('aria-label', appState.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode');
+            } else {
+                console.warn('Theme toggle button not found');
+            }
         }
 
         function toggleTheme() {
-            setTheme(appState.isDarkMode ? 'light' : 'dark');
+            if (appState && typeof appState.isDarkMode !== 'undefined') {
+                setTheme(appState.isDarkMode ? 'light' : 'dark');
+            } else {
+                console.warn('appState or isDarkMode not available');
+            }
         }
 
         function showNotification(message, type = 'info', title = '') {
             const container = document.getElementById('notification-container');
+            if (!container) {
+                console.error('Notification container not found');
+                // Fallback: try to log the notification
+                console.log(`[${type.toUpperCase()}] ${title || message}`);
+                return;
+            }
             
             const notification = document.createElement('div');
             notification.className = `notification ${type}`;
@@ -708,18 +1282,59 @@
 
         function setupEventListeners() {
             const themeToggle = document.getElementById('theme-toggle');
-            themeToggle.addEventListener('click', toggleTheme);
+            if (themeToggle) {
+                themeToggle.addEventListener('click', toggleTheme);
+            } else {
+                console.warn('Theme toggle button not found');
+            }
+            
+            // Setup close modal buttons
+            const closeButtons = document.querySelectorAll('[data-modal-close]');
+            closeButtons.forEach(btn => {
+                btn.addEventListener('click', closeUploadModal);
+            });
+            
+            // Setup modal overlay close
+            const modal = document.getElementById('upload-modal');
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        closeUploadModal();
+                    }
+                });
+            }
+            
+            // Setup filter listeners
+            const statusFilter = document.getElementById('status-filter');
+            const sortFilter = document.getElementById('sort-filter');
+            
+            if (statusFilter) {
+                statusFilter.addEventListener('change', () => {
+                    loadPatientAnalyses();
+                });
+            }
+            
+            if (sortFilter) {
+                sortFilter.addEventListener('change', () => {
+                    loadPatientAnalyses();
+                });
+            }
         }
 
         function handleLogout() {
             // In a real app, this would clear session/token
             localStorage.removeItem('isAuthenticated');
             localStorage.removeItem('userRole');
-            window.location.href = '/login.html';
+            window.location.href = '/login';
         }
 
         function showSkeletonLoaders(count) {
             const container = document.getElementById('results-list');
+            if (!container) {
+                console.error('Results list container not found');
+                return;
+            }
+            
             container.innerHTML = '';
             
             for (let i = 0; i < count; i++) {
@@ -743,17 +1358,40 @@
             const emptyState = document.getElementById('empty-state');
             const pagination = document.getElementById('pagination');
             
+            if (!resultsList) {
+                console.error('Results list element not found');
+                return;
+            }
+            
             // Show skeleton loaders
             showSkeletonLoaders(appState.itemsPerPage);
-            emptyState.style.display = 'none';
-            pagination.style.display = 'none';
+            if (emptyState) emptyState.style.display = 'none';
+            if (pagination) pagination.style.display = 'none';
 
             try {
-                const status = document.getElementById('status-filter').value;
-                const sort = document.getElementById('sort-filter').value;
+                const statusFilter = document.getElementById('status-filter');
+                const sortFilter = document.getElementById('sort-filter');
                 
-                // Real API call to /api/doctor/my/results
-                const response = await fetch(`/api/doctor/my/results?page=${page}&sort_by=${sort}`, {
+                // Get filter values
+                const status = statusFilter ? statusFilter.value : 'all';
+                const sortValue = sortFilter ? sortFilter.value : 'recent';
+                
+                // Map sort value to API parameter
+                let sortBy = 'created_at';
+                if (sortValue === 'oldest') {
+                    sortBy = 'created_at_asc';
+                } else if (sortValue === 'recent') {
+                    sortBy = 'created_at_desc';
+                }
+                
+                // Build query parameters
+                let queryParams = `page=${page}&sort_by=${sortBy}`;
+                if (status && status !== 'all') {
+                    queryParams += `&review_status=${status}`;
+                }
+                
+                // Real API call to /api/doctor/my/results (works for both patient and doctor)
+                const response = await fetch(`/api/doctor/my/results?${queryParams}`, {
                     method: 'GET',
                     headers: {
                         'X-CSRF-Token': getCsrfToken()
@@ -763,28 +1401,146 @@
                 
                 if (!response.ok) throw new Error('Network response was not ok');
                 const apiData = await response.json();
-                
-                // Transform API data to match existing UI format
-                const mockData = apiData.data ? {
-                    items: apiData.data.items || [],
-                    pagination: {
-                        page: apiData.data.page || 1,
-                        per_page: apiData.data.per_page || 9,
-                        total: apiData.data.total || 0,
-                        pages: apiData.data.pages || 1
+
+                // Append raw API response to on-page debug panel for easier diagnosis
+                try {
+                    const dbg = document.getElementById('debug-logs');
+                    if (dbg) {
+                        const entry = document.createElement('div');
+                        entry.style.marginBottom = '6px';
+
+                        // Prepare JSON strings (full + truncated)
+                        let fullText = '';
+                        try { fullText = JSON.stringify(apiData, null, 2); } catch (e) { fullText = String(apiData); }
+                        const LIMIT = 20000; // larger but bounded
+                        const truncated = (fullText.length > LIMIT) ? fullText.substring(0, LIMIT) + '\n...truncated...' : fullText;
+
+                        // Create a pre element for better formatting and scroll
+                        const pre = document.createElement('pre');
+                        pre.className = 'debug-json';
+                        pre.style.maxHeight = '260px';
+                        pre.style.overflow = 'auto';
+                        pre.style.background = '#f8fafc';
+                        pre.style.padding = '8px';
+                        pre.style.border = '1px solid #e5e7eb';
+                        pre.style.borderRadius = '6px';
+                        pre.style.whiteSpace = 'pre-wrap';
+                        pre.style.fontFamily = 'monospace';
+                        pre.textContent = '[api-data]\n' + truncated;
+
+                        // Add a toggle button to reveal full content if truncated
+                        if (fullText.length > truncated.length) {
+                            const btn = document.createElement('button');
+                            btn.className = 'btn btn-secondary';
+                            btn.style.marginTop = '6px';
+                            btn.textContent = 'عرض كامل';
+                            btn.addEventListener('click', (e) => {
+                                // replace pre content with full text on demand
+                                pre.textContent = '[api-data]\n' + fullText;
+                                btn.style.display = 'none';
+                            });
+                            entry.appendChild(pre);
+                            entry.appendChild(btn);
+                        } else {
+                            entry.appendChild(pre);
+                        }
+
+                        dbg.appendChild(entry);
                     }
-                } : { items: [], pagination: { page: 1, per_page: 9, total: 0, pages: 1 } };
-                
-                if (mockData.items.length === 0) {
+                } catch (e) {
+                    console.warn('Failed to append apiData to debug panel', e);
+                }
+
+                // Normalize API items to the shape expected by the UI
+                const rawItems = apiData && apiData.data && Array.isArray(apiData.data.items) ? apiData.data.items : [];
+                const mappedItems = rawItems.map(item => ({
+                    id: item.id,
+                    created_at: item.created_at,
+                    // UI expects `result` while API returns `model_result`
+                    result: item.model_result || item.result || null,
+                    confidence: (typeof item.confidence !== 'undefined') ? item.confidence : (item.confidence || 0),
+                    review_status: item.review_status || 'pending',
+                    image_url: item.image_url || item.image_url || '/static/assets/images/placeholder-xray.svg',
+                    doctor_notes: item.doctor_notes || null
+                }));
+
+                const mockData = {
+                    items: mappedItems,
+                    pagination: {
+                        page: apiData && apiData.data ? (apiData.data.page || 1) : 1,
+                        per_page: apiData && apiData.data ? (apiData.data.per_page || appState.itemsPerPage) : appState.itemsPerPage,
+                        total: apiData && apiData.data ? (apiData.data.total || mappedItems.length) : mappedItems.length,
+                        pages: apiData && apiData.data ? (apiData.data.pages || 1) : 1
+                    }
+                };
+
+                if (!Array.isArray(mockData.items) || mockData.items.length === 0) {
                     resultsList.style.display = 'none';
-                    emptyState.style.display = 'block';
+                    if (emptyState) emptyState.style.display = 'block';
                 } else {
                     resultsList.style.display = 'grid';
-                    emptyState.style.display = 'none';
-                    displayResults(mockData.items);
-                    updateStats(mockData);
-                    updatePagination(mockData.pagination);
+                    if (emptyState) emptyState.style.display = 'none';
+                    try {
+                        displayResults(mockData.items);
+                    } catch (renderErr) {
+                        console.error('displayResults threw an error:', renderErr);
+                        // Show a minimal fallback renderer so user sees results
+                        resultsList.innerHTML = mockData.items.map(item => `\n                            <div class="result-card">\n                                <div class="result-header">\n                                    <div class="result-title">\n                                        <h4>تحليل #${item.id}</h4>\n                                        <div class="result-date">${new Date(item.created_at).toLocaleDateString(appState && appState.currentLang === 'ar' ? 'ar-EG' : 'en-US')}</div>\n                                    </div>\n                                    <span class="result-status ${item.review_status === 'pending' ? 'status-pending' : 'status-reviewed'}">${item.review_status}</span>\n                                </div>\n                                <div class="result-content">\n                                    <div class="result-image"><img data-src="${item.image_url}" src="/static/assets/images/placeholder-xray.svg" class="progressive-img" alt="صورة أشعة" onerror="this.onerror=null;this.src='/static/assets/images/placeholder-xray.svg';"></div>\n                                    <div class="result-details">\n                                        <div class="detail-row">\n                                            <div class="detail-label">النتيجة:</div>\n                                            <div class="detail-value">${item.result || item.model_result || 'N/A'}</div>\n                                        </div>\n                                        <div class="detail-row">\n                                            <div class="detail-label">درجة الثقة:</div>\n                                            <div class="detail-value">${(item.confidence || 0).toFixed ? (item.confidence).toFixed(1) + '%' : item.confidence + '%'}</div>\n                                        </div>\n                                    </div>\n                                </div>\n                            </div>\n                        `).join('');
+                    }
+
+                    try {
+                        updateStats(mockData);
+                    } catch (statsErr) {
+                        console.warn('updateStats failed:', statsErr);
+                        try { reportClientError({message: String(statsErr), stack: (statsErr && statsErr.stack) || '', url: window.location.href, extra: 'updateStats failure'}); } catch(e){}
+                    }
+
+                    try {
+                        updatePagination(mockData.pagination);
+                    } catch (pageErr) {
+                        console.warn('updatePagination failed:', pageErr);
+                        try { reportClientError({message: String(pageErr), stack: (pageErr && pageErr.stack) || '', url: window.location.href, extra: 'updatePagination failure'}); } catch(e){}
+                    }
                 }
+        // Report client-side errors to server for diagnostics
+        async function reportClientError(payload) {
+            try {
+                const body = {
+                    message: payload.message || '',
+                    stack: payload.stack || '',
+                    url: payload.url || window.location.href,
+                    userAgent: navigator.userAgent || '',
+                    extra: payload.extra || ''
+                };
+
+                // Send without blocking UI; do not throw on failure
+                fetch('/api/log_client_error', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+                    body: JSON.stringify(body),
+                    credentials: 'include'
+                }).then(resp => {
+                    if (!resp.ok) console.warn('Client error report failed', resp.status);
+                }).catch(e => console.warn('Client error report failed', e));
+            } catch (e) {
+                console.warn('reportClientError internal failure', e);
+            }
+        }
+
+        // Global handlers to capture uncaught errors and promise rejections
+        window.addEventListener('error', function(event) {
+            try {
+                const err = event && event.error ? event.error : { message: event.message };
+                reportClientError({ message: err.message || String(event.message), stack: err.stack || '', url: location.href, extra: 'uncaught error' });
+            } catch(e){}
+        });
+
+        window.addEventListener('unhandledrejection', function(event) {
+            try {
+                const reason = event.reason || {};
+                reportClientError({ message: reason.message || String(reason), stack: reason.stack || '', url: location.href, extra: 'unhandledrejection' });
+            } catch(e){}
+        });
             } catch (error) {
                 console.error('Error loading patient analyses:', error);
                 showNotification(t('error_network'), 'error');
@@ -807,7 +1563,7 @@
                     review_status: isPending ? 'pending' : 'reviewed',
                     result: hasPneumonia ? 'PNEUMONIA' : 'NORMAL',
                     confidence: 70 + Math.random() * 30,
-                    image_url: `https://picsum.photos/seed/analysis${i}/400/300.jpg`,
+                    image_url: `/static/assets/images/placeholder-xray.svg`,
                     doctor_notes: isPending ? null : "الصورة تظهر حالة واضحة. يوصى بمتابعة الحالة."
                 });
             }
@@ -842,6 +1598,16 @@
 
         function displayResults(results) {
             const container = document.getElementById('results-list');
+            if (!container) {
+                console.error('Results list container not found');
+                return;
+            }
+            
+            if (!Array.isArray(results) || results.length === 0) {
+                container.innerHTML = '<p class="no-results">لا توجد نتائج</p>';
+                return;
+            }
+            
             container.innerHTML = results.map(result => `
                 <div class="result-card">
                     <div class="result-header">
@@ -849,7 +1615,7 @@
                             <h4>تحليل #${result.id}</h4>
                             <div class="result-date">
                                 <i class="fas fa-calendar"></i> 
-                                ${new Date(result.created_at).toLocaleDateString(appState.currentLang === 'ar' ? 'ar-EG' : 'en-US')}
+                                ${new Date(result.created_at).toLocaleDateString(appState && appState.currentLang === 'ar' ? 'ar-EG' : 'en-US')}
                             </div>
                         </div>
                         <span class="result-status ${result.review_status === 'pending' ? 'status-pending' : 'status-reviewed'}">
@@ -860,7 +1626,7 @@
 
                     <div class="result-content">
                         <div class="result-image">
-                            <img src="${result.image_url}" alt="صورة أشعة سينية" onerror="this.onerror=null;this.src='https://picsum.photos/seed/placeholder/400/300.jpg';">
+                            <img data-src="${result.image_url}" src="/static/assets/images/placeholder-xray.svg" class="progressive-img" alt="صورة أشعة سينية" onerror="this.onerror=null;this.src='/static/assets/images/placeholder-xray.svg';">
                         </div>
                         <div class="result-details">
                             <div class="detail-row">
@@ -896,18 +1662,74 @@
                             <i class="fas fa-download" aria-hidden="true"></i> 
                             <span data-i18n="download_btn">تحميل</span>
                         </button>
+                        <button class="btn btn-danger" onclick="deleteAnalysis('${result.id}')" aria-label="حذف التحليل" tabindex="0" style="background-color: #dc3545;">
+                            <i class="fas fa-trash" aria-hidden="true"></i> 
+                            <span data-i18n="delete_btn">حذف</span>
+                        </button>
                     </div>
                 </div>
             `).join('');
         }
 
+        // Build a single result DOM node (same layout as displayResults) for optimistic prepend
+        function buildResultCardNode(result) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'result-card';
+
+            const createdAt = result.created_at || new Date().toISOString();
+            const reviewStatus = result.review_status || 'pending';
+            const imageUrl = result.image_url || '/static/assets/images/placeholder-xray.svg';
+            const confidence = (typeof result.confidence !== 'undefined') ? result.confidence : 0;
+            const humanResult = (result.result || result.model_result) === 'PNEUMONIA' ? '🔴 التهاب رئوي' : '🟢 سليم';
+
+            wrapper.innerHTML = `
+                <div class="result-header">
+                    <div class="result-title">
+                        <h4>تحليل #${result.id || '—'}</h4>
+                        <div class="result-date"><i class="fas fa-calendar"></i> ${new Date(createdAt).toLocaleDateString(appState && appState.currentLang === 'ar' ? 'ar-EG' : 'en-US')}</div>
+                    </div>
+                    <span class="result-status ${reviewStatus === 'pending' ? 'status-pending' : 'status-reviewed'}">${reviewStatus === 'pending' ? t('filter_pending') : t('filter_reviewed')}</span>
+                </div>
+                    <div class="result-content">
+                    <div class="result-image">
+                        <img data-src="${imageUrl}" src="/static/assets/images/placeholder-xray.svg" class="progressive-img" alt="صورة أشعة سينية" onerror="this.onerror=null;this.src='/static/assets/images/placeholder-xray.svg';">
+                    </div>
+                    <div class="result-details">
+                        <div class="detail-row">
+                            <div class="detail-label" data-i18n="result_analysis_label">النتيجة:</div>
+                            <div class="detail-value">${humanResult}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label" data-i18n="result_confidence_label">درجة الثقة:</div>
+                            <div class="detail-value">${(confidence).toFixed ? (confidence).toFixed(1) + '%' : confidence + '%'}</div>
+                        </div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${confidence}%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="result-actions">
+                    <button class="btn btn-primary" onclick="viewDetails('${result.id}')"><i class="fas fa-eye"></i> ${t('view_details_btn') || 'عرض التفاصيل'}</button>
+                    <button class="btn btn-secondary" onclick="downloadResult('${result.id}')"><i class="fas fa-download"></i> ${t('download_btn') || 'تحميل'}</button>
+                    <button class="btn btn-danger" onclick="deleteAnalysis('${result.id}')" style="background-color: #dc3545;"><i class="fas fa-trash"></i> ${t('delete_btn') || 'حذف'}</button>
+                </div>
+            `;
+
+            return wrapper;
+        }
+
         function updateStats(data) {
+            if (!data || !data.pagination || !Array.isArray(data.items)) {
+                console.warn('Invalid data provided to updateStats');
+                return;
+            }
+            
             const total = data.pagination.total;
             const pending = data.items.filter(i => i.review_status === 'pending').length;
             const reviewed = data.items.filter(i => i.review_status === 'reviewed').length;
             const pneumonia = data.items.filter(i => i.result === 'PNEUMONIA').length;
 
-            // Animate the counter update
+            // Animate counter update
             animateCounter('total-analyses', total);
             animateCounter('pending-count', pending);
             animateCounter('reviewed-count', reviewed);
@@ -916,6 +1738,11 @@
 
         function animateCounter(id, target) {
             const element = document.getElementById(id);
+            if (!element) {
+                console.warn(`Counter element with id '${id}' not found`);
+                return;
+            }
+            
             const start = parseInt(element.textContent) || 0;
             const increment = (target - start) / 30;
             let current = start;
@@ -932,12 +1759,17 @@
         }
 
         function updatePagination(pagination) {
-            if (pagination.pages <= 1) {
-                document.getElementById('pagination').style.display = 'none';
+            const paginationContainer = document.getElementById('pagination');
+            if (!paginationContainer) {
+                console.warn('Pagination container not found');
+                return;
+            }
+            
+            if (!pagination || pagination.pages <= 1) {
+                paginationContainer.style.display = 'none';
                 return;
             }
 
-            const paginationContainer = document.getElementById('pagination');
             let html = '';
             
             if (pagination.page > 1) {
@@ -956,43 +1788,581 @@
             paginationContainer.style.display = 'flex';
         }
 
-        function viewDetails(resultId) {
-            // In a real app, this would navigate to a details page
-            showNotification(`عرض تفاصيل التحليل #${resultId}`, 'info');
+        async function viewDetails(resultId) {
+            // Fetch and display analysis details in a modal
+            try {
+                showNotification(t('loading') || 'جاري التحميل...', 'info');
+                
+                const response = await fetch(`/patient/analysis/${resultId}`);
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}`);
+                }
+                
+                const analysis = await response.json();
+                
+                // Create modal content
+                const modal = document.createElement('div');
+                modal.id = 'details-modal';
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 9999;
+                    direction: ${document.dir || 'ltr'};
+                `;
+                
+                modal.innerHTML = `
+                    <div style="background: white; border-radius: 8px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+                        <div style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                            <h2 style="margin: 0; font-size: 1.5em; color: #007a7a;">${t('analysis_details') || 'تفاصيل التحليل'}</h2>
+                            <button onclick="document.getElementById('details-modal').remove()" style="background: none; border: none; font-size: 1.5em; cursor: pointer;">×</button>
+                        </div>
+                        <div style="padding: 20px;">
+                            <div style="margin-bottom: 15px;">
+                                <strong>${t('result_analysis_label') || 'النتيجة:'}
+                                <span style="color: ${analysis.result === 'PNEUMONIA' ? '#dc3545' : '#28a745'}; font-size: 1.1em;">${analysis.result}</span></strong>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <strong>${t('result_confidence_label') || 'درجة الثقة:'}
+                                <span>${(analysis.confidence * 100).toFixed(2)}%</span></strong>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <strong>${t('uploaded_at') || 'تاريخ الرفع:'}</strong>
+                                <div>${new Date(analysis.uploaded_at).toLocaleString(document.documentElement.lang === 'ar' ? 'ar-SA' : 'en-US')}</div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <strong>${t('review_status_label') || 'حالة المراجعة:'}</strong>
+                                <div>${analysis.review_status === 'reviewed' ? (t('reviewed') || 'تمت المراجعة') : (t('pending') || 'قيد الانتظار')}</div>
+                            </div>
+                            ${analysis.doctor_notes ? `
+                                <div style="margin-bottom: 15px;">
+                                    <strong>${t('doctor_notes_label') || 'ملاحظات الطبيب:'}</strong>
+                                    <div>${analysis.doctor_notes}</div>
+                                </div>
+                            ` : ''}
+                            <div style="margin-bottom: 15px;">
+                                <strong>${t('images') || 'الصور:'}</strong>
+                                <div style="margin-top: 10px;">
+                                    <img data-src="${analysis.original_image_url}" src="/static/assets/images/placeholder-xray.svg" class="progressive-img" alt="Original" style="max-width: 100%; height: auto; border-radius: 4px; margin-bottom: 10px;">
+                                    <img data-src="${analysis.saliency_map_url}" src="/static/assets/images/placeholder-xray.svg" class="progressive-img" alt="Saliency Map" style="max-width: 100%; height: auto; border-radius: 4px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding: 20px; border-top: 1px solid #eee; text-align: right;">
+                            <button onclick="document.getElementById('details-modal').remove()" class="btn btn-secondary">${t('close_btn') || 'إغلاق'}</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                // Start loading any images in the modal that use data-src so they appear immediately
+                try {
+                    modal.querySelectorAll('img[data-src]').forEach(imgEl => {
+                        const ds = imgEl.getAttribute('data-src');
+                        if (ds) {
+                            imgEl.src = ds;
+                            imgEl.removeAttribute('data-src');
+                        }
+                    });
+                } catch(e) { /* ignore */ }
+                showNotification(t('loaded_success') || 'تم تحميل التفاصيل بنجاح', 'success');
+            } catch (error) {
+                console.error('Error fetching details:', error);
+                showNotification(error.message || t('error_loading_details') || 'فشل تحميل التفاصيل', 'error');
+            }
         }
 
         function downloadResult(resultId) {
-            // In a real app, this would trigger a download
-            showNotification(`جاري تحميل التحليل #${resultId}`, 'success');
+            // Download analysis files (image + saliency map as ZIP)
+            showNotification(t('downloading') || 'جاري التحميل...', 'info');
+            window.location.href = `/api/analysis/${resultId}/download`;
+        }
+
+        async function deleteAnalysis(resultId) {
+            // Confirm deletion
+            if (!confirm(t('confirm_delete') || 'هل أنت متأكد من حذف هذا التحليل؟')) {
+                return;
+            }
+
+            try {
+                showNotification(t('deleting') || 'جاري الحذف...', 'info');
+                
+                const response = await fetch(`/api/analysis/${resultId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-Token': getCsrfToken(),
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    let errMsg = `خطأ: ${response.status}`;
+                    try {
+                        const errorJson = await response.json();
+                        errMsg = errorJson.message || errorJson.data?.message || errorJson.error || errMsg;
+                    } catch (_) {}
+                    throw new Error(errMsg);
+                }
+
+                const result = await response.json();
+
+                if (result && result.success) {
+                    showNotification(t('delete_success') || 'تم حذف التحليل بنجاح', 'success');
+                    
+                    // Remove the card from DOM
+                    const card = document.querySelector(`[data-analysis-id="${resultId}"]`);
+                    if (card) {
+                        card.remove();
+                    }
+                    
+                    // Reload analyses after a short delay
+                    setTimeout(() => loadPatientAnalyses(), 500);
+                } else {
+                    const errMsg = (result && (result.message || result.data?.message)) || t('error_delete_failed') || 'فشل حذف التحليل';
+                    throw new Error(errMsg);
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showNotification(error.message || t('error_delete_failed') || 'فشل حذف التحليل', 'error');
+            }
         }
         
         function getCsrfToken() {
-            const name = 'XSRF-TOKEN=';
-            const decodedCookie = decodeURIComponent(document.cookie);
-            const cookieArray = decodedCookie.split(';');
-            for (let i = 0; i < cookieArray.length; i++) {
-                let cookie = cookieArray[i].trim();
-                if (cookie.indexOf(name) === 0) {
-                    return cookie.substring(name.length);
+            try {
+                const name = 'XSRF-TOKEN=';
+                const decodedCookie = decodeURIComponent(document.cookie);
+                const cookieArray = decodedCookie.split(';');
+                for (let i = 0; i < cookieArray.length; i++) {
+                    let cookie = cookieArray[i].trim();
+                    if (cookie.indexOf(name) === 0) {
+                        const token = cookie.substring(name.length);
+                        if (token) return token;
+                    }
                 }
+                console.warn('XSRF-TOKEN cookie not found');
+            } catch (error) {
+                console.error('Error retrieving CSRF token:', error);
             }
             return '';
         }
         
         function t(key) { 
+            // Safety checks for appState and translations
+            if (!appState) {
+                console.warn('appState not initialized');
+                return key;
+            }
+            if (!translations || !translations[appState.currentLang]) {
+                console.warn(`Translation not found for lang: ${appState.currentLang}`);
+                return key;
+            }
             return translations[appState.currentLang][key] || key; 
         }
-    </script>
-    <!-- Core JavaScript Module -->
-    <script src="{{ url_for('static', filename='core.js') }}"></script>
-    <script>
-        // Initialize PneumoApp on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.PneumoApp) {
-                PneumoApp.init();
-                PneumoApp.Theme.init();
+
+        // ========== Upload Modal Functions ==========
+
+        function openUploadModal() {
+            const modal = document.getElementById('upload-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                resetUpload();
+            } else {
+                console.error('Upload modal element not found');
+            }
+        }
+
+        function closeUploadModal() {
+            const modal = document.getElementById('upload-modal');
+            if (modal) {
+                modal.style.display = 'none';
+                resetUpload();
+            }
+        }
+
+        function resetUpload() {
+            selectedFile = null;
+            currentAnalysisData = null;
+            
+            const uploadArea = document.getElementById('upload-area');
+            const previewSection = document.getElementById('preview-section');
+            const analysisResults = document.getElementById('analysis-results');
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const saveBtn = document.getElementById('save-btn');
+            const imageInput = document.getElementById('image-input');
+            
+            if (uploadArea) uploadArea.style.display = 'block';
+            if (previewSection) previewSection.style.display = 'none';
+            if (analysisResults) analysisResults.style.display = 'none';
+            if (analyzeBtn) analyzeBtn.style.display = 'none';
+            if (saveBtn) saveBtn.style.display = 'none';
+            if (imageInput) imageInput.value = '';
+            const uploadError = document.getElementById('upload-error');
+            if (uploadError) {
+                uploadError.textContent = '';
+                uploadError.style.display = 'none';
+            }
+            const retryBtn = document.getElementById('retry-btn');
+            if (retryBtn) retryBtn.style.display = 'none';
+        }
+
+        function triggerImageInput() {
+            const imageInput = document.getElementById('image-input');
+            if (imageInput) {
+                imageInput.click();
+            } else {
+                console.error('Image input element not found');
+            }
+        }
+
+        // ========== Drag and Drop ==========
+        const uploadArea = document.querySelector('.upload-area');
+        if (uploadArea) {
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('dragover');
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileSelect(files[0]);
+                }
+            });
+
+            uploadArea.addEventListener('click', () => {
+                triggerImageInput();
+            });
+        }
+
+        
+        // Image input change listener
+        const imageInput = document.getElementById('image-input');
+        if (imageInput) {
+            imageInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+        } else {
+            console.warn('Image input element not found');
+        }
+
+        function handleFileSelect(file) {
+            console.log('handleFileSelect called', file && file.name, file && file.type, file && file.size);
+            // Validate file
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                showNotification(t('error_invalid_format') || 'صيغة الملف غير مدعومة', 'error');
+                return;
+            }
+
+            if (file.size > 50 * 1024 * 1024) { // 50MB
+                showNotification(t('error_file_too_large') || 'الملف كبير جداً', 'error');
+                return;
+            }
+
+            selectedFile = file;
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                console.log('FileReader loaded preview data');
+                const previewImage = document.getElementById('preview-image');
+                const uploadArea = document.getElementById('upload-area');
+                const previewSection = document.getElementById('preview-section');
+                const analyzeBtn = document.getElementById('analyze-btn');
+                
+                if (previewImage) previewImage.src = e.target.result;
+                if (uploadArea) uploadArea.style.display = 'none';
+                if (previewSection) previewSection.style.display = 'block';
+                if (analyzeBtn) analyzeBtn.style.display = 'inline-flex';
+                console.log('Preview shown, analyze button visible');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Patient analysis flow: performs a temporary analysis (no save)
+        async function startAnalysisPatient(file) {
+            const uploadError = document.getElementById('upload-error');
+            const previewSection = document.getElementById('preview-section');
+            const analysisResults = document.getElementById('analysis-results');
+
+            if (uploadError) { uploadError.textContent = ''; uploadError.style.display = 'none'; }
+
+            showNotification(t('analyzing') || 'جاري التحليل...', 'info');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                console.log('startAnalysisPatient: sending /api/analyze');
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    let errMsg = `خطأ: ${response.status}`;
+                    try {
+                        const errorJson = await response.json();
+                        errMsg = errorJson.message || errorJson.data?.message || errorJson.error || errMsg;
+                    } catch (_) {
+                        try { const txt = await response.text(); if (txt) errMsg = txt; } catch(e){}
+                    }
+                    throw new Error(errMsg);
+                }
+
+                const result = await response.json();
+
+                if (result && result.success && result.data) {
+                    currentAnalysisData = result.data;
+                    displayAnalysisResults(result.data);
+                    showNotification(t('analysis_complete') || 'تم التحليل بنجاح', 'success');
+                } else {
+                    const errMsg = (result && (result.message || result.data?.message)) || t('error_analysis_failed') || 'فشل التحليل';
+                    throw new Error(errMsg);
+                }
+
+            } catch (error) {
+                console.error('startAnalysisPatient error:', error);
+                throw error;
+            }
+        }
+
+        async function analyzeImage() {
+            console.log('analyzeImage invoked', { selectedFile });
+            if (!selectedFile) {
+                showNotification(t('error_no_file') || 'لم يتم تحديد ملف', 'error');
+                return;
+            }
+
+            const analyzeBtn = document.getElementById('analyze-btn');
+            if (!analyzeBtn) {
+                console.error('Analyze button not found');
+                return;
+            }
+            
+            analyzeBtn.disabled = true;
+
+            try {
+                await startAnalysisPatient(selectedFile);
+            } catch (e) {
+                console.error('startAnalysisPatient error:', e);
+                const errText = e && e.message ? e.message : (t('error_analysis_failed') || 'فشل التحليل');
+                showNotification(errText, 'error');
+                const uploadError = document.getElementById('upload-error');
+                if (uploadError) { uploadError.textContent = errText; uploadError.style.display = 'block'; }
+                const retryBtn = document.getElementById('retry-btn');
+                if (retryBtn) retryBtn.style.display = 'inline-flex';
+            } finally {
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        function displayAnalysisResults(data) {
+            if (!data) {
+                console.error('No data provided to displayAnalysisResults');
+                return;
+            }
+
+            const resultBadge = document.getElementById('result-badge');
+            const resultValue = document.getElementById('result-value');
+            const confidenceValue = document.getElementById('confidence-value');
+            const confidenceFill = document.getElementById('confidence-fill-large');
+
+            // Safety check for required elements
+            if (!resultBadge || !resultValue || !confidenceValue || !confidenceFill) {
+                console.error('Required DOM elements not found for displaying results');
+                return;
+            }
+
+            const result = data.model_result || data.result;
+            const confidence = data.confidence || 0;
+            
+            // Set badge
+            const isSafe = result === 'NORMAL' || result === 'normal';
+            resultBadge.className = `result-status-badge ${isSafe ? 'normal' : 'pneumonia'}`;
+            resultBadge.innerHTML = `
+                <i class="fas fa-${isSafe ? 'check-circle' : 'exclamation-circle'}"></i>
+                <span style="margin-left: 8px;">${isSafe ? '✓ سليم' : '⚠ التهاب رئوي'}</span>
+            `;
+
+            // Set result value
+            resultValue.textContent = isSafe ? 'سليم' : 'التهاب رئوي';
+
+            // Set confidence
+            confidenceValue.textContent = `${confidence.toFixed(1)}%`;
+            confidenceFill.style.width = `${confidence}%`;
+
+            // Show saliency map if available
+            if (data.saliency_url) {
+                const saliencyImage = document.getElementById('saliency-image');
+                if (saliencyImage) {
+                    saliencyImage.src = data.saliency_url;
+                }
+            }
+
+            // Show results section
+            const previewSection = document.getElementById('preview-section');
+            const analysisResults = document.getElementById('analysis-results');
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const saveBtn = document.getElementById('save-btn');
+            
+            if (previewSection) previewSection.style.display = 'none';
+            if (analysisResults) analysisResults.style.display = 'block';
+            if (analyzeBtn) analyzeBtn.style.display = 'none';
+            if (saveBtn) saveBtn.style.display = 'inline-flex';
+            const retryBtn = document.getElementById('retry-btn');
+            if (retryBtn) retryBtn.style.display = 'none';
+        }
+
+        async function saveAnalysisResult() {
+            if (!selectedFile) {
+                showNotification(t('error_no_file') || 'لم يتم تحديد ملف', 'error');
+                return;
+            }
+
+            // Check if we have analysis results to save
+            if (!currentAnalysisData) {
+                showNotification(t('error_no_analysis') || 'لا توجد نتائج لحفظ', 'error');
+                return;
+            }
+
+            const saveBtn = document.getElementById('save-btn');
+            if (!saveBtn) {
+                console.error('Save button not found');
+                return;
+            }
+            
+            saveBtn.disabled = true;
+
+            try {
+                showNotification(t('saving_analysis') || 'جاري حفظ النتائج...', 'info');
+                const uploadError = document.getElementById('upload-error');
+                if (uploadError) { uploadError.textContent = ''; uploadError.style.display = 'none'; }
+
+                console.log('saveAnalysisResult: saving with pre-computed analysis', currentAnalysisData);
+
+                // Send file and analysis data as multipart
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('result', currentAnalysisData.model_result || currentAnalysisData.result);
+                formData.append('confidence', currentAnalysisData.confidence);
+
+                // Use save_analysis endpoint (uses pre-computed results, no re-analysis)
+                const response = await fetch('/api/save_analysis', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-Token': getCsrfToken()
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    let errMsg = `خطأ: ${response.status}`;
+                    try {
+                        const errorJson = await response.json();
+                        errMsg = errorJson.message || errorJson.data?.message || errorJson.error || errMsg;
+                    } catch (_) {
+                        try {
+                            const txt = await response.text();
+                            if (txt) errMsg = txt;
+                        } catch (_) {}
+                    }
+                    console.error('Save API returned error', response.status, errMsg);
+                    showNotification(errMsg, 'error');
+                    if (uploadError) { uploadError.textContent = errMsg; uploadError.style.display = 'block'; }
+                    return;
+                }
+
+                const result = await response.json();
+                console.log('saveAnalysisResult: response', result);
+
+                if (result && result.success) {
+                    showNotification(t('analysis_saved_successfully') || 'تم حفظ النتائج بنجاح', 'success');
+
+                    // Reload analyses and close modal
+                    // Prefer optimistic UI: prepend the newly saved item returned by the API, then refresh in background
+                    try {
+                        const savedData = result.data || {};
+                        const item = {
+                            id: savedData.analysis_id || savedData.id,
+                            model_result: savedData.result || savedData.model_result,
+                            result: savedData.result || savedData.model_result,
+                            confidence: savedData.confidence,
+                            image_url: savedData.image_url,
+                            saliency_url: savedData.saliency_url,
+                            created_at: savedData.created_at || new Date().toISOString(),
+                            review_status: 'pending'
+                        };
+
+                        const resultsList = document.getElementById('results-list');
+                        const emptyState = document.getElementById('empty-state');
+                        if (resultsList) {
+                            // ensure container visible
+                            resultsList.style.display = 'grid';
+                            if (emptyState) emptyState.style.display = 'none';
+                            // prepend node
+                            const node = buildResultCardNode(item);
+                            resultsList.insertBefore(node, resultsList.firstChild);
+                        }
+
+                    } catch (e) {
+                        console.warn('Optimistic prepend failed', e);
+                    } finally {
+                        // Close modal and refresh in background
+                        closeUploadModal();
+                        setTimeout(() => loadPatientAnalyses(), 1000);
+                    }
+                } else {
+                    const errMsg = (result && (result.message || result.data?.message)) || t('error_save_failed') || 'فشل حفظ النتائج';
+                    console.error('Save response invalid:', result);
+                    showNotification(errMsg, 'error');
+                    if (uploadError) { uploadError.textContent = errMsg; uploadError.style.display = 'block'; }
+                }
+
+            } catch (error) {
+                console.error('Save error:', error);
+                showNotification(error.message || t('error_save_failed') || 'فشل حفظ النتائج', 'error');
+            } finally {
+                saveBtn.disabled = false;
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('upload-modal');
+            if (e.target === modal) {
+                closeUploadModal();
             }
         });
+
+        // Event listener for upload button - مع تأخير للتأكد من تحميل DOM
+        
     </script>
+    <!-- Diagnostic Script (for debugging) -->
+    <script src="{{ url_for('static', filename='diagnostic.js') }}"></script>
+    <!-- Core JavaScript Module -->
+    <script src="{{ url_for('static', filename='core.js') }}"></script>
 </body>
 </html>

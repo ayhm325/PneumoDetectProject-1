@@ -5,6 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="PneumoDetect - نظام ذكي لكشف التهاب الرئة من الأشعات السينية باستخدام الذكاء الاصطناعي">
     <title data-i18n="page_title">PneumoDetect - كشف ذكي للالتهاب الرئوي</title>
+        <link rel="canonical" href="{{ request.url }}">
+        <meta property="og:title" content="PneumoDetect - تشخيص الالتهاب الرئوي عبر الأشعة السينية">
+        <meta property="og:description" content="PneumoDetect يساعدك في تحليل صور الأشعة السينية بدقة وسرعة باستخدام نموذج ذكاء اصطناعي">
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="{{ request.url }}">
+        <meta property="og:image" content="{{ url_for('static', filename='assets/images/og-image.png') }}">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="PneumoDetect">
+        <meta name="twitter:description" content="تحليلات أشعة سينية مدعومة بالذكاء الاصطناعي لمساعدة الأطباء والمرضى">
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "PneumoDetect",
+            "url": "{{ request.url }}"
+        }
+        </script>
     
     <!-- External Resources -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -94,6 +111,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 20px 30px;
+            position: relative;
         }
 
         .branding {
@@ -103,28 +121,20 @@
             font-size: 1.6rem;
             font-weight: 700;
             color: var(--primary-color);
+            position: absolute;
+            right: 30px;
         }
 
         .branding i { font-size: 2rem; }
 
-        .main-nav { display: flex; gap: 30px; }
-
-        .nav-link {
-            color: var(--dark-color);
-            text-decoration: none;
-            font-weight: 500;
-            padding: 10px 20px;
-            border-radius: 50px;
-            transition: var(--transition);
-        }
-
-        .nav-link:hover, .nav-link.active {
-            color: var(--white-color);
-            background-color: var(--primary-color);
+        .header-actions { 
+            display: flex; 
+            align-items: center; 
+            gap: 20px;
+            position: absolute;
+            left: 30px;
         }
         
-        .header-actions { display: flex; align-items: center; gap: 20px; }
-
         /* --- Theme Toggle --- */
         .theme-toggle {
             background: none;
@@ -249,14 +259,14 @@
 
         .btn-outline {
             background-color: transparent;
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
+            color: var(--white-color);
+            border: 2px solid var(--white-color);
             box-shadow: none;
         }
 
         .btn-outline:hover {
-            background-color: var(--primary-color);
-            color: var(--white-color);
+            background-color: var(--white-color);
+            color: var(--primary-color);
         }
 
         .btn-large { padding: 16px 36px; font-size: 1.15rem; }
@@ -273,7 +283,7 @@
         /* Lazy loading background image */
         .hero-section.lazy-bg {
             background: linear-gradient(135deg, rgba(0, 122, 122, 0.8), rgba(0, 92, 92, 0.9)), 
-                        url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=2070') center/cover;
+                        url('/static/assets/images/hero-bg.svg') center/cover;
         }
 
         .hero-content {
@@ -511,7 +521,8 @@
         /* --- Responsive Design --- */
         @media (max-width: 992px) {
             .header-container { flex-direction: column; gap: 25px; }
-            .main-nav { order: 3; width: 100%; justify-content: center; }
+            .branding { position: static; }
+            .header-actions { position: static; }
             .hero-title { font-size: 2.2rem; }
             .cta-buttons { flex-direction: column; align-items: center; }
             .cta-buttons .btn { width: 280px; }
@@ -525,8 +536,6 @@
         @media (max-width: 576px) {
             .header-container { padding: 15px; }
             .branding { font-size: 1.3rem; }
-            .main-nav { flex-wrap: wrap; gap: 10px; }
-            .nav-link { padding: 8px 15px; font-size: 0.9rem; }
             .hero-section { padding: 60px 0; }
             .hero-title { font-size: 1.6rem; }
             .features-grid { grid-template-columns: 1fr; }
@@ -547,28 +556,32 @@
                 <i class="fas fa-lungs" aria-hidden="true"></i>
                 <h1>PneumoDetect</h1>
             </div>
-            <nav class="main-nav" role="navigation" aria-label="الملاحة الرئيسية">
-                <a href="#home" class="nav-link active" data-i18n="nav_home">الرئيسية</a>
-                <a href="#analysis" class="nav-link" data-i18n="nav_analysis">التحليل</a>
-            </nav>
             <div class="header-actions">
                 <!-- Theme Toggle -->
                 <button class="theme-toggle" id="theme-toggle" aria-label="تبديل الوضع الليلي">
                     <i class="fas fa-moon" id="theme-icon"></i>
                 </button>
+                    <button class="theme-toggle" id="print-btn" aria-label="طباعة الصفحة">
+                        <i class="fas fa-print"></i>
+                    </button>
+                    <!-- Language Toggle -->
+                    <div class="lang-toggle" role="group" aria-label="تغيير اللغة">
+                        <button onclick="setLanguage('ar')" data-lang="ar" class="active" aria-pressed="true">AR</button>
+                        <button onclick="setLanguage('en')" data-lang="en" aria-pressed="false">EN</button>
+                        <div class="indicator"></div>
+                    </div>
                 <!-- Language Toggle -->
                 <div class="lang-toggle" role="group" aria-label="تغيير اللغة">
                     <button onclick="setLanguage('ar')" data-lang="ar" class="active" aria-pressed="true">AR</button>
                     <button onclick="setLanguage('en')" data-lang="en" aria-pressed="false">EN</button>
                     <div class="indicator"></div>
                 </div>
-                <a href="login.html" class="btn btn-outline"><i class="fas fa-sign-in-alt"></i> <span data-i18n="nav_login">دخول</span></a>
             </div>
         </div>
     </header>
 
     <main id="main-content" role="main">
-        <section id="home-section" class="hero-section" data-bg="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=2070">
+        <section id="home-section" class="hero-section" data-bg="/static/assets/images/hero-bg.svg">
             <div class="hero-content">
                 <h1 class="hero-title" data-i18n="home_title">🎯 مرحباً بك في PneumoDetect</h1>
                 <p class="hero-subtitle" data-i18n="home_description">
@@ -582,6 +595,10 @@
                     <a href="register.html" class="btn btn-secondary btn-large">
                         <i class="fas fa-user-plus"></i>
                         <span data-i18n="home_cta_register">إنشاء حساب جديد</span>
+                    </a>
+                    <a href="login.html" class="btn btn-outline btn-large">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span data-i18n="nav_login">دخول</span>
                     </a>
                 </div>
             </div>
@@ -626,7 +643,7 @@
                     </div>
                     <button class="btn btn-secondary" style="margin-top: 20px; width: 100%;" onclick="loadSampleImage()">
                         <i class="fas fa-image"></i>
-                        <span data-i18n="try_sample_image">جرب تحليل صورة مثال</span>
+                        <span data-i18n="try_sample_image">تحليل</span>
                     </button>
                 </div>
 
@@ -680,7 +697,7 @@
         const translations = {
             ar: {
                 page_title: "PneumoDetect - كشف ذكي للالتهاب الرئوي",
-                nav_home: "الرئيسية", nav_analysis: "التحليل", nav_login: "دخول",
+                nav_login: "دخول",
                 home_title: "🎯 مرحباً بك في PneumoDetect",
                 home_description: "منصة متقدمة لتحليل صور الأشعة السينية للصدر باستخدام الذكاء الاصطناعي بدقة وموثوقية عالية.",
                 home_cta_analyze: "ابدأ تحليلاً جديداً", home_cta_register: "إنشاء حساب جديد",
@@ -691,7 +708,7 @@
                 analysis_title: "🔬 تحليل صورة الأشعة السينية",
                 analysis_description: "اختر صورة بصيغة JPG أو PNG لبدء التحليل الفوري.",
                 upload_label_title: "اسحب الصورة هنا أو انقر للاختيار", upload_label_desc: "PNG, JPG (الحد الأقصى: 50MB)",
-                try_sample_image: "جرب تحليل صورة مثال",
+                try_sample_image: "تحليل",
                 analyzing_text: "جاري تحليل الصورة بالذكاء الاصطناعي...",
                 result_analysis_label: "نتيجة التحليل:",
                 tooltip_normal: "لا توجد علامات واضحة للالتهاب الرئوي في الصورة.",
@@ -703,7 +720,7 @@
             },
             en: {
                 page_title: "PneumoDetect - Intelligent Pneumonia Detection",
-                nav_home: "Home", nav_analysis: "Analysis", nav_login: "Login",
+                nav_login: "Login",
                 home_title: "🎯 Welcome to PneumoDetect",
                 home_description: "An advanced platform for analyzing chest X-ray images using artificial intelligence with high accuracy and reliability.",
                 home_cta_analyze: "Start a new analysis", home_cta_register: "Create a new account",
@@ -714,7 +731,7 @@
                 analysis_title: "🔬 X-ray Image Analysis",
                 analysis_description: "Select a JPG or PNG image to start instant analysis.",
                 upload_label_title: "Drag image here or click to select", upload_label_desc: "PNG, JPG (Max: 50MB)",
-                try_sample_image: "Try analyzing a sample image",
+                try_sample_image: "Analyze",
                 analyzing_text: "Analyzing image with AI...",
                 result_analysis_label: "Analysis Result:",
                 tooltip_normal: "No clear signs of pneumonia are visible in image.",
@@ -806,70 +823,38 @@
         }
 
         function setupEventListeners() {
-            const uploadArea = document.getElementById('file-upload-area');
-            const imageInput = document.getElementById('imageInput');
+            // Event listeners are now handled by PneumoApp.Index module in core.js
+            // This prevents duplicate event handling and POST requests
             const themeToggle = document.getElementById('theme-toggle');
-
-            uploadArea.addEventListener('click', () => imageInput.click());
-            uploadArea.addEventListener('keypress', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); imageInput.click(); } });
-            
-            uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
-            uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
-            uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
-            
-            imageInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
-            themeToggle.addEventListener('click', toggleTheme);
+            if (themeToggle) {
+                themeToggle.addEventListener('click', toggleTheme);
+            }
         }
 
         function handleFile(file) {
-            if (!file) return;
-            const maxSize = 50 * 1024 * 1024;
-            const allowedTypes = ['image/jpeg', 'image/png'];
-
-            if (!allowedTypes.includes(file.type)) {
-                showNotification(t('error_invalid_file'), 'error', t('error_title'));
-                return;
+            // This function is now handled by PneumoApp.Index.handleFile in core.js
+            // Forwarding to the main module to prevent duplicate submissions
+            if (window.PneumoApp && window.PneumoApp.Index && window.PneumoApp.Index.handleFile) {
+                PneumoApp.Index.handleFile(file);
             }
-            if (file.size > maxSize) {
-                showNotification(t('error_file_too_large'), 'error', t('error_title'));
-                return;
-            }
-            
-            showNotification(`تم اختيار الملف: ${file.name}`, 'success');
-            startAnalysis(file);
         }
 
         function loadSampleImage() {
-            showNotification('جاري تحميل صورة المثال...', 'info');
-            // Create a proper image blob using a data URL
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            
-            // Draw a simple medical-like image (grayscale pattern)
-            ctx.fillStyle = '#a0a0a0';
-            ctx.fillRect(0, 0, 256, 256);
-            
-            // Add some pattern to simulate X-ray
-            ctx.fillStyle = '#d0d0d0';
-            ctx.beginPath();
-            ctx.ellipse(128, 128, 80, 100, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.fillStyle = '#808080';
-            ctx.beginPath();
-            ctx.ellipse(128, 128, 60, 80, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Convert canvas to blob and create file
-            canvas.toBlob((blob) => {
-                const sampleFile = new File([blob], 'sample_xray.jpg', { type: 'image/jpeg' });
-                startAnalysis(sampleFile);
-            }, 'image/jpeg', 0.8);
+            // This function is now handled by PneumoApp.Index.loadSampleImage in core.js
+            // Forwarding to the main module to prevent duplicate submissions
+            if (window.PneumoApp && window.PneumoApp.Index && window.PneumoApp.Index.loadSampleImage) {
+                PneumoApp.Index.loadSampleImage();
+            }
         }
 
         async function startAnalysis(file) {
+            // This function is now handled by PneumoApp.Index.startAnalysis in core.js
+            // Forwarding to the main module to prevent duplicate submissions
+            if (window.PneumoApp && window.PneumoApp.Index && window.PneumoApp.Index.startAnalysis) {
+                PneumoApp.Index.startAnalysis(file);
+                return;
+            }
+
             const loadingState = document.getElementById('loading-state');
             const resultDiv = document.getElementById('analysis-result');
             const progressBar = document.getElementById('analysis-progress-bar');
@@ -958,7 +943,7 @@
                 ${data.saliency_url ? `
                 <div class="result-item">
                     <label>خريطة الإبراز (Saliency Map):</label>
-                    <img src="${data.saliency_url}" alt="خريطة الإبراز" style="max-width: 100%; border-radius: 8px; margin-top: 10px;">
+                    <img data-src="${data.saliency_url}" src="/static/assets/images/placeholder-xray.svg" class="progressive-img" alt="خريطة الإبراز" style="max-width: 100%; border-radius: 8px; margin-top: 10px;">
                 </div>
                 ` : ''}
             `;

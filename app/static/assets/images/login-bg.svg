@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="loginGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#064e3b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1920" height="1080" fill="url(#loginGrad)"/>
+  
+  <!-- Stethoscope Pattern -->
+  <g opacity="0.1" stroke="#10b981" stroke-width="3" fill="none">
+    <circle cx="300" cy="300" r="100"/>
+    <path d="M 400 300 Q 500 200 600 300"/>
+    <circle cx="300" cy="700" r="120"/>
+    <path d="M 420 700 Q 550 600 650 700"/>
+  </g>
+  
+  <!-- Medical Plus Icons -->
+  <g opacity="0.08" fill="#10b981">
+    <rect x="100" y="100" width="10" height="40"/>
+    <rect x="80" y="120" width="40" height="10"/>
+    <rect x="1700" y="800" width="10" height="40"/>
+    <rect x="1680" y="820" width="40" height="10"/>
+  </g>
+</svg>

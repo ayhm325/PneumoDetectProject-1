@@ -53,8 +53,6 @@
             --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* startAnalysisPatient handled in script block (moved to avoid JS inside <style>) */
-
         [data-theme="dark"] {
             --primary-color: #00a8a8;
             --primary-hover: #008c8c;
@@ -95,25 +93,38 @@
 
         /* --- Header --- */
         header {
-            background-color: var(--white-color);
-            box-shadow: var(--box-shadow);
-            padding: 15px 30px;
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: var(--transition);
+            min-height: 80px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            z-index: 100;
+            padding: 32px 40px 32px 40px;
         }
 
         .branding {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 1.5rem;
-            font-weight: 700;
+            gap: 18px;
+            font-size: 2.2rem;
+            font-weight: 800;
             color: var(--primary-color);
+            position: absolute;
+            right: 40px;
+            height: 100%;
         }
 
-        .header-actions { display: flex; align-items: center; gap: 20px; }
+        .header-actions { 
+            display: flex; 
+            align-items: center; 
+            gap: 20px; 
+            position: absolute;
+            left: 30px;
+        }
 
         .nav-link {
             display: flex;
@@ -151,11 +162,18 @@
             border-radius: 50px;
             padding: 4px;
             display: flex;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            min-width: 90px;
         }
+        
+        [data-theme="dark"] .lang-toggle {
+            background-color: var(--gray-color);
+        }
+        
         .lang-toggle button {
             background: none;
             border: none;
-            padding: 8px 16px;
+            padding: 8px 12px;
             cursor: pointer;
             font-weight: 600;
             color: var(--gray-color);
@@ -163,8 +181,14 @@
             transition: color 0.3s;
             z-index: 2;
             position: relative;
+            font-size: 0.85rem;
+            flex: 1;
         }
-        .lang-toggle button.active { color: var(--white-color); }
+        
+        .lang-toggle button.active { 
+            color: var(--white-color); 
+        }
+        
         .lang-toggle .indicator {
             position: absolute;
             top: 4px;
@@ -174,10 +198,24 @@
             transition: var(--transition);
             z-index: 1;
         }
-        [dir="rtl"] .lang-toggle .indicator { right: 4px; width: calc(50% - 4px); }
-        [dir="rtl"] .lang-toggle button[data-lang="en"].active ~ .indicator { transform: translateX(-100%); }
-        [dir="ltr"] .lang-toggle .indicator { left: 4px; width: calc(50% - 4px); }
-        [dir="ltr"] .lang-toggle button[data-lang="ar"].active ~ .indicator { transform: translateX(100%); }
+        
+        [dir="rtl"] .lang-toggle .indicator { 
+            right: 4px; 
+            width: calc(50% - 4px); 
+        }
+        
+        [dir="rtl"] .lang-toggle button[data-lang="en"].active ~ .indicator { 
+            transform: translateX(-100%); 
+        }
+        
+        [dir="ltr"] .lang-toggle .indicator { 
+            left: 4px; 
+            width: calc(50% - 4px); 
+        }
+        
+        [dir="ltr"] .lang-toggle button[data-lang="ar"].active ~ .indicator { 
+            transform: translateX(100%); 
+        }
 
         .user-info-section {
             display: flex;
@@ -743,11 +781,11 @@
 
     <!-- Header -->
     <header role="banner">
-        <div class="branding">
+        <div class="branding" style="position: absolute; right: 30px; left: auto; direction: ltr;">
             <i class="fas fa-lungs" aria-hidden="true"></i>
             <h1>PneumoDetect</h1>
         </div>
-        <div class="header-actions">
+        <div class="header-actions" style="position: absolute; left: 30px; right: auto; flex-direction: row;">
             <a href="/" class="nav-link" aria-label="الرئيسية">
                 <i class="fas fa-home"></i>
                 <span data-i18n="nav_home">الرئيسية</span>
@@ -807,21 +845,21 @@
                 </div>
                 <div class="stat-info">
                     <h3 data-i18n="stat_pending_review">قيد المراجعة</h3>
-                                <div class="result-content">
-                                    <div class="result-image"><img data-src="${item.image_url}" src="/static/assets/images/placeholder-xray.svg" class="progressive-img" alt="صورة أشعة" onerror="this.onerror=null;this.src='/static/assets/images/placeholder-xray.svg';"></div>
-                                    <div class="result-details">
-                                        <div class="detail-row">
-                                            <div class="detail-label">النتيجة:</div>
-                                            <div class="detail-value">${item.result || item.model_result || 'N/A'}</div>
-                                        </div>
-                                        <div class="detail-row">
-                                            <div class="detail-label">درجة الثقة:</div>
-                                            <div class="detail-value">${(item.confidence || 0).toFixed ? (item.confidence).toFixed(1) + '%' : item.confidence + '%'}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('');
+                    <div class="value" id="pending-count">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); color: var(--success);">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 data-i18n="stat_reviewed">تم مراجعتها</h3>
+                    <div class="value" id="reviewed-count">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); color: var(--error);">
+                    <i class="fas fa-exclamation-triangle"></i>
                 </div>
                 <div class="stat-info">
                     <h3 data-i18n="stat_pneumonia_cases">حالات الالتهاب</h3>
@@ -934,7 +972,7 @@
                         <!-- Saliency Map -->
                         <div class="saliency-section" style="margin-top: 20px;">
                             <h4 data-i18n="saliency_title">خريطة المناطق المهمة</h4>
-                            <img id="saliency-image" src="" alt="خريطة الإبراز" style="max-width: 100%; max-height: 300px; border-radius: 8px; margin-top: 10px;">
+                            <img id="saliency-image" src="" alt="خريطة الإبراز" style="max-width: 100%; max-height: 300px; border-radius:8px; margin-top:10px;">
                         </div>
                     </div>
                 </div>
@@ -1048,7 +1086,7 @@
             en: {
                 nav_home: "Home",
                 my_results_title: "📋 Your Analysis History",
-                my_results_description: "View and browse all the X-ray analyses you have performed.",
+                my_results_description: "View and browse all X-ray analyses you have performed.",
                 new_analysis_btn: "New Analysis",
                 stat_total_analyses: "Total Analyses",
                 stat_pending_review: "Pending Review",
@@ -1115,34 +1153,6 @@
             }
         };
 
-        // --- Debug: global fetch interceptor to log requests and responses ---
-        (function() {
-            try {
-                const _fetch = window.fetch.bind(window);
-                window.fetch = async function(...args) {
-                    try {
-                        console.log('[debug-fetch] request:', args[0], args[1] && args[1].method, args[1] && args[1].headers);
-                        const res = await _fetch(...args);
-                        // clone response to read body without consuming original
-                        try {
-                            const clone = res.clone();
-                            clone.text().then(body => {
-                                console.log('[debug-fetch] response:', args[0], 'status:', res.status, 'body:', body.substring(0, 2000));
-                            }).catch(e => console.warn('[debug-fetch] response read failed', e));
-                        } catch (e) {
-                            console.warn('[debug-fetch] clone failed', e);
-                        }
-                        return res;
-                    } catch (err) {
-                        console.error('[debug-fetch] network error for', args[0], err);
-                        throw err;
-                    }
-                };
-            } catch (e) {
-                console.warn('Failed to install fetch interceptor', e);
-            }
-        })();
-
         document.addEventListener('DOMContentLoaded', () => {
             console.log('Patient page DOMContentLoaded');
             
@@ -1159,41 +1169,13 @@
             // 3. Setup upload button listener (with duplicate prevention)
             const uploadBtn = document.getElementById('open-upload-btn');
             if (uploadBtn && !appState.uploadListenerAttached) {
-                // Remove any existing listener to prevent duplicates
-                uploadBtn.removeEventListener('click', openUploadModal);
                 uploadBtn.addEventListener('click', openUploadModal);
                 appState.uploadListenerAttached = true;
                 console.log('Upload button listener attached (duplicates prevented)');
-            } else if (uploadBtn && appState.uploadListenerAttached) {
-                console.log('Upload button listener already attached, skipping');
-            } else {
-                console.warn('Upload button not found');
             }
             
             // 4. Load patient analyses
             loadPatientAnalyses();
-
-            // Small retry: if results don't appear in a short time, try again and log to debug panel
-            setTimeout(() => {
-                try {
-                    const resultsList = document.getElementById('results-list');
-                    const emptyState = document.getElementById('empty-state');
-                    const debugLogs = document.getElementById('debug-logs');
-                    const hasResults = resultsList && resultsList.children && resultsList.children.length > 0 && resultsList.innerText.trim() !== '';
-                    if (!hasResults) {
-                        if (debugLogs) {
-                            const entry = document.createElement('div');
-                            entry.style.marginBottom = '6px';
-                            entry.style.whiteSpace = 'pre-wrap';
-                            entry.innerHTML = `<span style="color:#0b5fff">[info]</span> Retrying loadPatientAnalyses() (no results detected)`;
-                            debugLogs.appendChild(entry);
-                        }
-                        loadPatientAnalyses();
-                    }
-                } catch (e) {
-                    console.warn('Retry loadPatientAnalyses failed', e);
-                }
-            }, 1500);
         });
 
         function setLanguage(lang) {
@@ -1233,23 +1215,17 @@
             const themeIcon = document.getElementById('theme-icon');
             if (themeIcon) {
                 themeIcon.className = appState.isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
-            } else {
-                console.warn('Theme icon not found');
             }
             
             const themeToggle = document.getElementById('theme-toggle');
             if (themeToggle) {
                 themeToggle.setAttribute('aria-label', appState.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode');
-            } else {
-                console.warn('Theme toggle button not found');
             }
         }
 
         function toggleTheme() {
             if (appState && typeof appState.isDarkMode !== 'undefined') {
                 setTheme(appState.isDarkMode ? 'light' : 'dark');
-            } else {
-                console.warn('appState or isDarkMode not available');
             }
         }
 
@@ -1257,8 +1233,6 @@
             const container = document.getElementById('notification-container');
             if (!container) {
                 console.error('Notification container not found');
-                // Fallback: try to log the notification
-                console.log(`[${type.toUpperCase()}] ${title || message}`);
                 return;
             }
             
@@ -1284,8 +1258,6 @@
             const themeToggle = document.getElementById('theme-toggle');
             if (themeToggle) {
                 themeToggle.addEventListener('click', toggleTheme);
-            } else {
-                console.warn('Theme toggle button not found');
             }
             
             // Setup close modal buttons
@@ -1319,10 +1291,50 @@
                     loadPatientAnalyses();
                 });
             }
+            
+            // Setup drag and drop for upload area
+            const uploadArea = document.getElementById('upload-area');
+            if (uploadArea) {
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    uploadArea.classList.add('dragover');
+                });
+
+                uploadArea.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    uploadArea.classList.remove('dragover');
+                });
+
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    uploadArea.classList.remove('dragover');
+
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        handleFileSelect(files[0]);
+                    }
+                });
+
+                uploadArea.addEventListener('click', () => {
+                    triggerImageInput();
+                });
+            }
+            
+            // Setup image input change listener
+            const imageInput = document.getElementById('image-input');
+            if (imageInput) {
+                imageInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        handleFileSelect(e.target.files[0]);
+                    }
+                });
+            }
         }
 
         function handleLogout() {
-            // In a real app, this would clear session/token
             localStorage.removeItem('isAuthenticated');
             localStorage.removeItem('userRole');
             window.location.href = '/login';
@@ -1390,8 +1402,8 @@
                     queryParams += `&review_status=${status}`;
                 }
                 
-                // Real API call to /api/doctor/my/results (works for both patient and doctor)
-                const response = await fetch(`/api/doctor/my/results?${queryParams}`, {
+                // Real API call to /api/patient/analyses (patient-specific)
+                const response = await fetch(`/api/patient/analyses?${queryParams}`, {
                     method: 'GET',
                     headers: {
                         'X-CSRF-Token': getCsrfToken()
@@ -1402,61 +1414,11 @@
                 if (!response.ok) throw new Error('Network response was not ok');
                 const apiData = await response.json();
 
-                // Append raw API response to on-page debug panel for easier diagnosis
-                try {
-                    const dbg = document.getElementById('debug-logs');
-                    if (dbg) {
-                        const entry = document.createElement('div');
-                        entry.style.marginBottom = '6px';
-
-                        // Prepare JSON strings (full + truncated)
-                        let fullText = '';
-                        try { fullText = JSON.stringify(apiData, null, 2); } catch (e) { fullText = String(apiData); }
-                        const LIMIT = 20000; // larger but bounded
-                        const truncated = (fullText.length > LIMIT) ? fullText.substring(0, LIMIT) + '\n...truncated...' : fullText;
-
-                        // Create a pre element for better formatting and scroll
-                        const pre = document.createElement('pre');
-                        pre.className = 'debug-json';
-                        pre.style.maxHeight = '260px';
-                        pre.style.overflow = 'auto';
-                        pre.style.background = '#f8fafc';
-                        pre.style.padding = '8px';
-                        pre.style.border = '1px solid #e5e7eb';
-                        pre.style.borderRadius = '6px';
-                        pre.style.whiteSpace = 'pre-wrap';
-                        pre.style.fontFamily = 'monospace';
-                        pre.textContent = '[api-data]\n' + truncated;
-
-                        // Add a toggle button to reveal full content if truncated
-                        if (fullText.length > truncated.length) {
-                            const btn = document.createElement('button');
-                            btn.className = 'btn btn-secondary';
-                            btn.style.marginTop = '6px';
-                            btn.textContent = 'عرض كامل';
-                            btn.addEventListener('click', (e) => {
-                                // replace pre content with full text on demand
-                                pre.textContent = '[api-data]\n' + fullText;
-                                btn.style.display = 'none';
-                            });
-                            entry.appendChild(pre);
-                            entry.appendChild(btn);
-                        } else {
-                            entry.appendChild(pre);
-                        }
-
-                        dbg.appendChild(entry);
-                    }
-                } catch (e) {
-                    console.warn('Failed to append apiData to debug panel', e);
-                }
-
                 // Normalize API items to the shape expected by the UI
                 const rawItems = apiData && apiData.data && Array.isArray(apiData.data.items) ? apiData.data.items : [];
                 const mappedItems = rawItems.map(item => ({
                     id: item.id,
                     created_at: item.created_at,
-                    // UI expects `result` while API returns `model_result`
                     result: item.model_result || item.result || null,
                     confidence: (typeof item.confidence !== 'undefined') ? item.confidence : (item.confidence || 0),
                     review_status: item.review_status || 'pending',
@@ -1480,120 +1442,15 @@
                 } else {
                     resultsList.style.display = 'grid';
                     if (emptyState) emptyState.style.display = 'none';
-                    try {
-                        displayResults(mockData.items);
-                    } catch (renderErr) {
-                        console.error('displayResults threw an error:', renderErr);
-                        // Show a minimal fallback renderer so user sees results
-                        resultsList.innerHTML = mockData.items.map(item => `\n                            <div class="result-card">\n                                <div class="result-header">\n                                    <div class="result-title">\n                                        <h4>تحليل #${item.id}</h4>\n                                        <div class="result-date">${new Date(item.created_at).toLocaleDateString(appState && appState.currentLang === 'ar' ? 'ar-EG' : 'en-US')}</div>\n                                    </div>\n                                    <span class="result-status ${item.review_status === 'pending' ? 'status-pending' : 'status-reviewed'}">${item.review_status}</span>\n                                </div>\n                                <div class="result-content">\n                                    <div class="result-image"><img data-src="${item.image_url}" src="/static/assets/images/placeholder-xray.svg" class="progressive-img" alt="صورة أشعة" onerror="this.onerror=null;this.src='/static/assets/images/placeholder-xray.svg';"></div>\n                                    <div class="result-details">\n                                        <div class="detail-row">\n                                            <div class="detail-label">النتيجة:</div>\n                                            <div class="detail-value">${item.result || item.model_result || 'N/A'}</div>\n                                        </div>\n                                        <div class="detail-row">\n                                            <div class="detail-label">درجة الثقة:</div>\n                                            <div class="detail-value">${(item.confidence || 0).toFixed ? (item.confidence).toFixed(1) + '%' : item.confidence + '%'}</div>\n                                        </div>\n                                    </div>\n                                </div>\n                            </div>\n                        `).join('');
-                    }
-
-                    try {
-                        updateStats(mockData);
-                    } catch (statsErr) {
-                        console.warn('updateStats failed:', statsErr);
-                        try { reportClientError({message: String(statsErr), stack: (statsErr && statsErr.stack) || '', url: window.location.href, extra: 'updateStats failure'}); } catch(e){}
-                    }
-
-                    try {
-                        updatePagination(mockData.pagination);
-                    } catch (pageErr) {
-                        console.warn('updatePagination failed:', pageErr);
-                        try { reportClientError({message: String(pageErr), stack: (pageErr && pageErr.stack) || '', url: window.location.href, extra: 'updatePagination failure'}); } catch(e){}
-                    }
+                    displayResults(mockData.items);
+                    updateStats(mockData);
+                    updatePagination(mockData.pagination);
                 }
-        // Report client-side errors to server for diagnostics
-        async function reportClientError(payload) {
-            try {
-                const body = {
-                    message: payload.message || '',
-                    stack: payload.stack || '',
-                    url: payload.url || window.location.href,
-                    userAgent: navigator.userAgent || '',
-                    extra: payload.extra || ''
-                };
-
-                // Send without blocking UI; do not throw on failure
-                fetch('/api/log_client_error', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
-                    body: JSON.stringify(body),
-                    credentials: 'include'
-                }).then(resp => {
-                    if (!resp.ok) console.warn('Client error report failed', resp.status);
-                }).catch(e => console.warn('Client error report failed', e));
-            } catch (e) {
-                console.warn('reportClientError internal failure', e);
-            }
-        }
-
-        // Global handlers to capture uncaught errors and promise rejections
-        window.addEventListener('error', function(event) {
-            try {
-                const err = event && event.error ? event.error : { message: event.message };
-                reportClientError({ message: err.message || String(event.message), stack: err.stack || '', url: location.href, extra: 'uncaught error' });
-            } catch(e){}
-        });
-
-        window.addEventListener('unhandledrejection', function(event) {
-            try {
-                const reason = event.reason || {};
-                reportClientError({ message: reason.message || String(reason), stack: reason.stack || '', url: location.href, extra: 'unhandledrejection' });
-            } catch(e){}
-        });
             } catch (error) {
                 console.error('Error loading patient analyses:', error);
                 showNotification(t('error_network'), 'error');
                 resultsList.innerHTML = `<p class="error-message">${t('error_loading_data')}</p>`;
             }
-        }
-
-        function generateMockData(status, sort, page) {
-            const allItems = [];
-            const totalItems = 45; // Total number of items
-            
-            // Generate mock data
-            for (let i = 1; i <= totalItems; i++) {
-                const isPending = Math.random() > 0.7;
-                const hasPneumonia = Math.random() > 0.6;
-                
-                allItems.push({
-                    id: i,
-                    created_at: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)).toISOString(),
-                    review_status: isPending ? 'pending' : 'reviewed',
-                    result: hasPneumonia ? 'PNEUMONIA' : 'NORMAL',
-                    confidence: 70 + Math.random() * 30,
-                    image_url: `/static/assets/images/placeholder-xray.svg`,
-                    doctor_notes: isPending ? null : "الصورة تظهر حالة واضحة. يوصى بمتابعة الحالة."
-                });
-            }
-            
-            // Filter by status
-            let filteredItems = status === 'all' 
-                ? allItems 
-                : allItems.filter(item => item.review_status === status);
-            
-            // Sort
-            if (sort === 'oldest') {
-                filteredItems.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-            } else {
-                filteredItems.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            }
-            
-            // Paginate
-            const startIndex = (page - 1) * appState.itemsPerPage;
-            const endIndex = startIndex + appState.itemsPerPage;
-            const paginatedItems = filteredItems.slice(startIndex, endIndex);
-            
-            return {
-                items: paginatedItems,
-                pagination: {
-                    page: page,
-                    per_page: appState.itemsPerPage,
-                    total: filteredItems.length,
-                    pages: Math.ceil(filteredItems.length / appState.itemsPerPage)
-                }
-            };
         }
 
         function displayResults(results) {
@@ -1609,7 +1466,7 @@
             }
             
             container.innerHTML = results.map(result => `
-                <div class="result-card">
+                <div class="result-card" data-analysis-id="${result.id}">
                     <div class="result-header">
                         <div class="result-title">
                             <h4>تحليل #${result.id}</h4>
@@ -1669,53 +1526,6 @@
                     </div>
                 </div>
             `).join('');
-        }
-
-        // Build a single result DOM node (same layout as displayResults) for optimistic prepend
-        function buildResultCardNode(result) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'result-card';
-
-            const createdAt = result.created_at || new Date().toISOString();
-            const reviewStatus = result.review_status || 'pending';
-            const imageUrl = result.image_url || '/static/assets/images/placeholder-xray.svg';
-            const confidence = (typeof result.confidence !== 'undefined') ? result.confidence : 0;
-            const humanResult = (result.result || result.model_result) === 'PNEUMONIA' ? '🔴 التهاب رئوي' : '🟢 سليم';
-
-            wrapper.innerHTML = `
-                <div class="result-header">
-                    <div class="result-title">
-                        <h4>تحليل #${result.id || '—'}</h4>
-                        <div class="result-date"><i class="fas fa-calendar"></i> ${new Date(createdAt).toLocaleDateString(appState && appState.currentLang === 'ar' ? 'ar-EG' : 'en-US')}</div>
-                    </div>
-                    <span class="result-status ${reviewStatus === 'pending' ? 'status-pending' : 'status-reviewed'}">${reviewStatus === 'pending' ? t('filter_pending') : t('filter_reviewed')}</span>
-                </div>
-                    <div class="result-content">
-                    <div class="result-image">
-                        <img data-src="${imageUrl}" src="/static/assets/images/placeholder-xray.svg" class="progressive-img" alt="صورة أشعة سينية" onerror="this.onerror=null;this.src='/static/assets/images/placeholder-xray.svg';">
-                    </div>
-                    <div class="result-details">
-                        <div class="detail-row">
-                            <div class="detail-label" data-i18n="result_analysis_label">النتيجة:</div>
-                            <div class="detail-value">${humanResult}</div>
-                        </div>
-                        <div class="detail-row">
-                            <div class="detail-label" data-i18n="result_confidence_label">درجة الثقة:</div>
-                            <div class="detail-value">${(confidence).toFixed ? (confidence).toFixed(1) + '%' : confidence + '%'}</div>
-                        </div>
-                        <div class="confidence-bar">
-                            <div class="confidence-fill" style="width: ${confidence}%"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="result-actions">
-                    <button class="btn btn-primary" onclick="viewDetails('${result.id}')"><i class="fas fa-eye"></i> ${t('view_details_btn') || 'عرض التفاصيل'}</button>
-                    <button class="btn btn-secondary" onclick="downloadResult('${result.id}')"><i class="fas fa-download"></i> ${t('download_btn') || 'تحميل'}</button>
-                    <button class="btn btn-danger" onclick="deleteAnalysis('${result.id}')" style="background-color: #dc3545;"><i class="fas fa-trash"></i> ${t('delete_btn') || 'حذف'}</button>
-                </div>
-            `;
-
-            return wrapper;
         }
 
         function updateStats(data) {
@@ -1789,7 +1599,6 @@
         }
 
         async function viewDetails(resultId) {
-            // Fetch and display analysis details in a modal
             try {
                 showNotification(t('loading') || 'جاري التحميل...', 'info');
                 
@@ -1805,11 +1614,11 @@
                 modal.id = 'details-modal';
                 modal.style.cssText = `
                     position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.5);
+                    top:0;
+                    left:0;
+                    width:100%;
+                    height:100%;
+                    background: rgba(0,0,0,0.5);
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -1825,12 +1634,12 @@
                         </div>
                         <div style="padding: 20px;">
                             <div style="margin-bottom: 15px;">
-                                <strong>${t('result_analysis_label') || 'النتيجة:'}
-                                <span style="color: ${analysis.result === 'PNEUMONIA' ? '#dc3545' : '#28a745'}; font-size: 1.1em;">${analysis.result}</span></strong>
+                                <strong>${t('result_analysis_label') || 'النتيجة:'}</strong>
+                                <span style="color: ${analysis.result === 'PNEUMONIA' ? '#dc3545' : '#28a745'}; font-size: 1.1em;">${analysis.result}</span>
                             </div>
                             <div style="margin-bottom: 15px;">
-                                <strong>${t('result_confidence_label') || 'درجة الثقة:'}
-                                <span>${(analysis.confidence * 100).toFixed(2)}%</span></strong>
+                                <strong>${t('result_confidence_label') || 'درجة الثقة:'}</strong>
+                                <span>${(analysis.confidence * 100).toFixed(2)}%</span>
                             </div>
                             <div style="margin-bottom: 15px;">
                                 <strong>${t('uploaded_at') || 'تاريخ الرفع:'}</strong>
@@ -1861,16 +1670,14 @@
                 `;
                 
                 document.body.appendChild(modal);
-                // Start loading any images in the modal that use data-src so they appear immediately
-                try {
-                    modal.querySelectorAll('img[data-src]').forEach(imgEl => {
-                        const ds = imgEl.getAttribute('data-src');
-                        if (ds) {
-                            imgEl.src = ds;
-                            imgEl.removeAttribute('data-src');
-                        }
-                    });
-                } catch(e) { /* ignore */ }
+                // Start loading any images in modal that use data-src so they appear immediately
+                modal.querySelectorAll('img[data-src]').forEach(imgEl => {
+                    const ds = imgEl.getAttribute('data-src');
+                    if (ds) {
+                        imgEl.src = ds;
+                        imgEl.removeAttribute('data-src');
+                    }
+                });
                 showNotification(t('loaded_success') || 'تم تحميل التفاصيل بنجاح', 'success');
             } catch (error) {
                 console.error('Error fetching details:', error);
@@ -1879,13 +1686,11 @@
         }
 
         function downloadResult(resultId) {
-            // Download analysis files (image + saliency map as ZIP)
             showNotification(t('downloading') || 'جاري التحميل...', 'info');
             window.location.href = `/api/analysis/${resultId}/download`;
         }
 
         async function deleteAnalysis(resultId) {
-            // Confirm deletion
             if (!confirm(t('confirm_delete') || 'هل أنت متأكد من حذف هذا التحليل؟')) {
                 return;
             }
@@ -1916,7 +1721,7 @@
                 if (result && result.success) {
                     showNotification(t('delete_success') || 'تم حذف التحليل بنجاح', 'success');
                     
-                    // Remove the card from DOM
+                    // Remove card from DOM
                     const card = document.querySelector(`[data-analysis-id="${resultId}"]`);
                     if (card) {
                         card.remove();
@@ -1954,7 +1759,6 @@
         }
         
         function t(key) { 
-            // Safety checks for appState and translations
             if (!appState) {
                 console.warn('appState not initialized');
                 return key;
@@ -1973,8 +1777,6 @@
             if (modal) {
                 modal.style.display = 'flex';
                 resetUpload();
-            } else {
-                console.error('Upload modal element not found');
             }
         }
 
@@ -2003,11 +1805,13 @@
             if (analyzeBtn) analyzeBtn.style.display = 'none';
             if (saveBtn) saveBtn.style.display = 'none';
             if (imageInput) imageInput.value = '';
+            
             const uploadError = document.getElementById('upload-error');
             if (uploadError) {
                 uploadError.textContent = '';
                 uploadError.style.display = 'none';
             }
+            
             const retryBtn = document.getElementById('retry-btn');
             if (retryBtn) retryBtn.style.display = 'none';
         }
@@ -2016,57 +1820,10 @@
             const imageInput = document.getElementById('image-input');
             if (imageInput) {
                 imageInput.click();
-            } else {
-                console.error('Image input element not found');
             }
         }
 
-        // ========== Drag and Drop ==========
-        const uploadArea = document.querySelector('.upload-area');
-        if (uploadArea) {
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                uploadArea.classList.add('dragover');
-            });
-
-            uploadArea.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                uploadArea.classList.remove('dragover');
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                uploadArea.classList.remove('dragover');
-
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    handleFileSelect(files[0]);
-                }
-            });
-
-            uploadArea.addEventListener('click', () => {
-                triggerImageInput();
-            });
-        }
-
-        
-        // Image input change listener
-        const imageInput = document.getElementById('image-input');
-        if (imageInput) {
-            imageInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    handleFileSelect(e.target.files[0]);
-                }
-            });
-        } else {
-            console.warn('Image input element not found');
-        }
-
         function handleFileSelect(file) {
-            console.log('handleFileSelect called', file && file.name, file && file.type, file && file.size);
             // Validate file
             const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
             if (!allowedTypes.includes(file.type)) {
@@ -2084,7 +1841,6 @@
             // Show preview
             const reader = new FileReader();
             reader.onload = (e) => {
-                console.log('FileReader loaded preview data');
                 const previewImage = document.getElementById('preview-image');
                 const uploadArea = document.getElementById('upload-area');
                 const previewSection = document.getElementById('preview-section');
@@ -2094,26 +1850,28 @@
                 if (uploadArea) uploadArea.style.display = 'none';
                 if (previewSection) previewSection.style.display = 'block';
                 if (analyzeBtn) analyzeBtn.style.display = 'inline-flex';
-                console.log('Preview shown, analyze button visible');
             };
             reader.readAsDataURL(file);
         }
 
-        // Patient analysis flow: performs a temporary analysis (no save)
-        async function startAnalysisPatient(file) {
-            const uploadError = document.getElementById('upload-error');
-            const previewSection = document.getElementById('preview-section');
-            const analysisResults = document.getElementById('analysis-results');
+        async function analyzeImage() {
+            if (!selectedFile) {
+                showNotification(t('error_no_file') || 'لم يتم تحديد ملف', 'error');
+                return;
+            }
 
-            if (uploadError) { uploadError.textContent = ''; uploadError.style.display = 'none'; }
-
-            showNotification(t('analyzing') || 'جاري التحليل...', 'info');
+            const analyzeBtn = document.getElementById('analyze-btn');
+            if (!analyzeBtn) {
+                console.error('Analyze button not found');
+                return;
+            }
+            
+            analyzeBtn.disabled = true;
 
             try {
                 const formData = new FormData();
-                formData.append('file', file);
+                formData.append('file', selectedFile);
 
-                console.log('startAnalysisPatient: sending /api/analyze');
                 const response = await fetch('/api/analyze', {
                     method: 'POST',
                     body: formData,
@@ -2142,35 +1900,15 @@
                     throw new Error(errMsg);
                 }
 
-            } catch (error) {
-                console.error('startAnalysisPatient error:', error);
-                throw error;
-            }
-        }
-
-        async function analyzeImage() {
-            console.log('analyzeImage invoked', { selectedFile });
-            if (!selectedFile) {
-                showNotification(t('error_no_file') || 'لم يتم تحديد ملف', 'error');
-                return;
-            }
-
-            const analyzeBtn = document.getElementById('analyze-btn');
-            if (!analyzeBtn) {
-                console.error('Analyze button not found');
-                return;
-            }
-            
-            analyzeBtn.disabled = true;
-
-            try {
-                await startAnalysisPatient(selectedFile);
             } catch (e) {
                 console.error('startAnalysisPatient error:', e);
                 const errText = e && e.message ? e.message : (t('error_analysis_failed') || 'فشل التحليل');
                 showNotification(errText, 'error');
                 const uploadError = document.getElementById('upload-error');
-                if (uploadError) { uploadError.textContent = errText; uploadError.style.display = 'block'; }
+                if (uploadError) { 
+                    uploadError.textContent = errText; 
+                    uploadError.style.display = 'block'; 
+                }
                 const retryBtn = document.getElementById('retry-btn');
                 if (retryBtn) retryBtn.style.display = 'inline-flex';
             } finally {
@@ -2189,7 +1927,6 @@
             const confidenceValue = document.getElementById('confidence-value');
             const confidenceFill = document.getElementById('confidence-fill-large');
 
-            // Safety check for required elements
             if (!resultBadge || !resultValue || !confidenceValue || !confidenceFill) {
                 console.error('Required DOM elements not found for displaying results');
                 return;
@@ -2231,6 +1968,7 @@
             if (analysisResults) analysisResults.style.display = 'block';
             if (analyzeBtn) analyzeBtn.style.display = 'none';
             if (saveBtn) saveBtn.style.display = 'inline-flex';
+            
             const retryBtn = document.getElementById('retry-btn');
             if (retryBtn) retryBtn.style.display = 'none';
         }
@@ -2241,7 +1979,6 @@
                 return;
             }
 
-            // Check if we have analysis results to save
             if (!currentAnalysisData) {
                 showNotification(t('error_no_analysis') || 'لا توجد نتائج لحفظ', 'error');
                 return;
@@ -2260,15 +1997,11 @@
                 const uploadError = document.getElementById('upload-error');
                 if (uploadError) { uploadError.textContent = ''; uploadError.style.display = 'none'; }
 
-                console.log('saveAnalysisResult: saving with pre-computed analysis', currentAnalysisData);
-
-                // Send file and analysis data as multipart
                 const formData = new FormData();
                 formData.append('file', selectedFile);
                 formData.append('result', currentAnalysisData.model_result || currentAnalysisData.result);
                 formData.append('confidence', currentAnalysisData.confidence);
 
-                // Use save_analysis endpoint (uses pre-computed results, no re-analysis)
                 const response = await fetch('/api/save_analysis', {
                     method: 'POST',
                     body: formData,
@@ -2291,7 +2024,10 @@
                     }
                     console.error('Save API returned error', response.status, errMsg);
                     showNotification(errMsg, 'error');
-                    if (uploadError) { uploadError.textContent = errMsg; uploadError.style.display = 'block'; }
+                    if (uploadError) { 
+                        uploadError.textContent = errMsg; 
+                        uploadError.style.display = 'block'; 
+                    }
                     return;
                 }
 
@@ -2301,44 +2037,16 @@
                 if (result && result.success) {
                     showNotification(t('analysis_saved_successfully') || 'تم حفظ النتائج بنجاح', 'success');
 
-                    // Reload analyses and close modal
-                    // Prefer optimistic UI: prepend the newly saved item returned by the API, then refresh in background
-                    try {
-                        const savedData = result.data || {};
-                        const item = {
-                            id: savedData.analysis_id || savedData.id,
-                            model_result: savedData.result || savedData.model_result,
-                            result: savedData.result || savedData.model_result,
-                            confidence: savedData.confidence,
-                            image_url: savedData.image_url,
-                            saliency_url: savedData.saliency_url,
-                            created_at: savedData.created_at || new Date().toISOString(),
-                            review_status: 'pending'
-                        };
-
-                        const resultsList = document.getElementById('results-list');
-                        const emptyState = document.getElementById('empty-state');
-                        if (resultsList) {
-                            // ensure container visible
-                            resultsList.style.display = 'grid';
-                            if (emptyState) emptyState.style.display = 'none';
-                            // prepend node
-                            const node = buildResultCardNode(item);
-                            resultsList.insertBefore(node, resultsList.firstChild);
-                        }
-
-                    } catch (e) {
-                        console.warn('Optimistic prepend failed', e);
-                    } finally {
-                        // Close modal and refresh in background
-                        closeUploadModal();
-                        setTimeout(() => loadPatientAnalyses(), 1000);
-                    }
+                    closeUploadModal();
+                    setTimeout(() => loadPatientAnalyses(), 1000);
                 } else {
                     const errMsg = (result && (result.message || result.data?.message)) || t('error_save_failed') || 'فشل حفظ النتائج';
                     console.error('Save response invalid:', result);
                     showNotification(errMsg, 'error');
-                    if (uploadError) { uploadError.textContent = errMsg; uploadError.style.display = 'block'; }
+                    if (uploadError) { 
+                        uploadError.textContent = errMsg; 
+                        uploadError.style.display = 'block'; 
+                    }
                 }
 
             } catch (error) {
@@ -2356,10 +2064,8 @@
                 closeUploadModal();
             }
         });
-
-        // Event listener for upload button - مع تأخير للتأكد من تحميل DOM
-        
     </script>
+    
     <!-- Diagnostic Script (for debugging) -->
     <script src="{{ url_for('static', filename='diagnostic.js') }}"></script>
     <!-- Core JavaScript Module -->

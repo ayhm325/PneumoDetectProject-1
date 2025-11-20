@@ -158,10 +158,16 @@ def validate_required_fields(required_fields):
             from flask import request
             data = request.get_json(silent=True)
             
+            logger.info(f"[VALIDATE] Function: {f.__name__}, data={data}, required={required_fields}")
+            logger.info(f"[REQUEST] Content-Type: {request.content_type}, Method: {request.method}")
+            logger.info(f"[REQUEST] Headers: {dict(request.headers)}")
+            logger.info(f"[REQUEST] Data type: {type(data)}")
+            
             # JSON فاضي أو خطأ
             if not isinstance(data, dict):
+                logger.error(f"INVALID: {f.__name__} got {type(data)} instead of dict, data={data}")
                 response, code = APIResponse.error(
-                    message='تنسيق الطلب غير صالح، يجب إرسال JSON',
+                    message=f'تنسيق الطلب غير صالح (نوع البيانات: {type(data).__name__})',
                     code=400,
                     error_code='INVALID_JSON'
                 )
@@ -170,6 +176,7 @@ def validate_required_fields(required_fields):
             # التحقق من الحقول المطلوبة
             missing_fields = [field for field in required_fields if field not in data]
             if missing_fields:
+                logger.warning(f"Missing fields in {f.__name__}: {missing_fields}")
                 response, code = APIResponse.error(
                     message=f'حقول ناقصة: {", ".join(missing_fields)}',
                     code=400,
@@ -181,7 +188,7 @@ def validate_required_fields(required_fields):
         return decorated_function
     return decorator
 
-def rate_limit_per_user(max_requests=100, window_seconds=3600):
+def rate_limit_per_user(max_requests=100, window_seconds=60):
     """Decorator لتحديد معدل الطلبات لكل مستخدم."""
     from flask import request, g
     from collections import defaultdict

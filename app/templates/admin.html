@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="لوحة الإدارة - PneumoDetect، التحكم الكامل في النظام">
     <title data-i18n="admin_dashboard_title">لوحة الإدارة - PneumoDetect</title>
+    <link rel="canonical" href="{{ request.url }}">
+    <meta property="og:title" content="PneumoDetect — لوحة الإدارة">
+    <meta property="og:description" content="لوحة الإدارة - PneumoDetect، التحكم الكامل في النظام">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:image" content="{{ url_for('static', filename='assets/images/og-image.png') }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="PneumoDetect — لوحة الإدارة">
+    <meta name="twitter:description" content="لوحة الإدارة - PneumoDetect، التحكم الكامل في النظام">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "PneumoDetect - لوحة الإدارة",
+        "description": "لوحة إدارة النظام",
+        "url": "{{ request.url }}"
+    }
+    </script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -158,8 +176,6 @@
             transform: translateX(0);
         }
         
-        /* ... (Rest of sidebar CSS remains the same) ... */
-        
         .sidebar-header {
             display: flex;
             flex-direction: column;
@@ -290,7 +306,6 @@
             margin-right: 0;
             margin-left: 0;
         }
-
 
         /* --- Header --- */
         .admin-header {
@@ -797,6 +812,7 @@
             <p data-i18n="admin_panel_subtitle">لوحة التحكم</p>
         </div>
         <ul class="sidebar-menu">
+            <li><a href="/" class="menu-link" data-section="home"><i class="fas fa-home"></i> <span data-i18n="menu_home">الرئيسية</span></a></li>
             <li><a href="#dashboard" class="menu-link active" data-section="dashboard"><i class="fas fa-chart-line"></i> <span data-i18n="menu_dashboard">لوحة التحكم</span></a></li>
             <li><a href="#users" class="menu-link" data-section="users"><i class="fas fa-users"></i> <span data-i18n="menu_users">المستخدمون</span></a></li>
             <li><a href="#analyses" class="menu-link" data-section="analyses"><i class="fas fa-file-medical-alt"></i> <span data-i18n="menu_analyses">التحاليل</span></a></li>
@@ -805,9 +821,13 @@
     </aside>
 
     <main class="admin-main" id="admin-main" role="main">
-        <header class="admin-header" role="banner">
-            <h1 data-i18n="admin_welcome_title">🏥 لوحة إدارة PneumoDetect</h1>
-            <div class="header-actions">
+        <header class="admin-header" role="banner" style="background-color: rgba(255,255,255,0.95); backdrop-filter: blur(10px); box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; transition: all 0.4s cubic-bezier(0.4,0,0.2,1); min-height: 80px; display: flex; align-items: center; padding: 32px 40px;">
+            <div class="branding" style="display: flex; align-items: center; gap: 18px; font-size: 2.2rem; font-weight: 800; color: #007a7a; position: absolute; right: 40px; height: 100%;">
+                <i class="fas fa-lungs" aria-hidden="true"></i>
+                <h1>PneumoDetect</h1>
+            </div>
+            <h1 data-i18n="admin_welcome_title" style="margin-right: 220px;">🏥 لوحة إدارة PneumoDetect</h1>
+            <div class="header-actions" style="display: flex; align-items: center; gap: 20px; position: absolute; left: 30px;">
                 <div class="lang-toggle" role="group" aria-label="تغيير اللغة">
                     <button onclick="setLanguage('ar')" data-lang="ar" class="active" aria-pressed="true">AR</button>
                     <button onclick="setLanguage('en')" data-lang="en" aria-pressed="false">EN</button>
@@ -816,9 +836,12 @@
                 <button class="theme-toggle" id="theme-toggle" aria-label="تبديل الوضع الليلي">
                     <i class="fas fa-moon" id="theme-icon"></i>
                 </button>
+                <button class="theme-toggle" id="print-btn" aria-label="طباعة الصفحة">
+                    <i class="fas fa-print"></i>
+                </button>
                 <div class="user-badge">
                     <i class="fas fa-shield-alt"></i> 
-                    <span id="current-user-info">المسؤول</span>
+                    <span id="current-user-info">{{ username }}</span>
                 </div>
                 <button class="btn btn-logout" onclick="handleLogout()">
                     <i class="fas fa-sign-out-alt"></i> 
@@ -828,6 +851,59 @@
         </header>
 
         <div class="content">
+            <section id="home-section" class="page-section">
+                <h2 data-i18n="home_title">🏠 الصفحة الرئيسية</h2>
+                <div class="form-container">
+                    <h3 data-i18n="welcome_message">مرحباً بك في نظام PneumoDetect</h3>
+                    <p data-i18n="home_description">نظام متقدم للكشف عن التهاب الرئة باستخدام تقنيات الذكاء الاصطناعي. يمكنك من خلال هذه الواجهة إدارة المستخدمين والتحاليل الطبية ومراقبة أداء النظام.</p>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-info">
+                                <h3 data-i18n="quick_start">ابدأ الآن</h3>
+                                <div class="value"><i class="fas fa-arrow-circle-right"></i></div>
+                            </div>
+                            <div class="stat-icon"><i class="fas fa-rocket"></i></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-info">
+                                <h3 data-i18n="quick_analyze">تحليل جديد</h3>
+                                <div class="value"><i class="fas fa-plus-circle"></i></div>
+                            </div>
+                            <div class="stat-icon"><i class="fas fa-x-ray"></i></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-info">
+                                <h3 data-i18n="quick_reports">التقارير</h3>
+                                <div class="value"><i class="fas fa-chart-bar"></i></div>
+                            </div>
+                            <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-container" style="margin-top: 30px;">
+                        <h3 data-i18n="recent_activities">الأنشطة الحديثة</h3>
+                        <ul style="list-style-type: none; padding: 0;">
+                            <li style="padding: 10px 0; border-bottom: 1px solid #eee;">
+                                <i class="fas fa-user-plus" style="color: var(--success-color); margin-left: 10px;"></i>
+                                <span data-i18n="activity_new_user">تم إضافة مستخدم جديد</span>
+                                <span style="float: left; color: var(--gray-color);">منذ 5 دقائق</span>
+                            </li>
+                            <li style="padding: 10px 0; border-bottom: 1px solid #eee;">
+                                <i class="fas fa-file-medical-alt" style="color: var(--tech-accent-color); margin-left: 10px;"></i>
+                                <span data-i18n="activity_new_analysis">تم إجراء تحليل جديد</span>
+                                <span style="float: left; color: var(--gray-color);">منذ 15 دقيقة</span>
+                            </li>
+                            <li style="padding: 10px 0; border-bottom: 1px solid #eee;">
+                                <i class="fas fa-cog" style="color: var(--warning-color); margin-left: 10px;"></i>
+                                <span data-i18n="activity_settings_update">تم تحديث إعدادات النظام</span>
+                                <span style="float: left; color: var(--gray-color);">منذ ساعة</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
             <section id="dashboard-section" class="page-section active">
                 <h2 data-i18n="admin_dashboard_title">📊 نظرة عامة</h2>
                 <div class="stats-grid">
@@ -994,7 +1070,10 @@
         const translations = {
             ar: {
                 admin_dashboard_title: "لوحة الإدارة", admin_panel_title: "⚙️ الإدارة", admin_panel_subtitle: "لوحة التحكم", admin_welcome_title: "🏥 لوحة إدارة PneumoDetect",
-                menu_dashboard: "لوحة التحكم", menu_users: "المستخدمون", menu_analyses: "التحاليل", menu_settings: "الإعدادات",
+                menu_home: "الرئيسية", menu_dashboard: "لوحة التحكم", menu_users: "المستخدمون", menu_analyses: "التحاليل", menu_settings: "الإعدادات",
+                home_title: "🏠 الصفحة الرئيسية", welcome_message: "مرحباً بك في نظام PneumoDetect", home_description: "نظام متقدم للكشف عن التهاب الرئة باستخدام تقنيات الذكاء الاصطناعي. يمكنك من خلال هذه الواجهة إدارة المستخدمين والتحاليل الطبية ومراقبة أداء النظام.",
+                quick_start: "ابدأ الآن", quick_analyze: "تحليل جديد", quick_reports: "التقارير", recent_activities: "الأنشطة الحديثة",
+                activity_new_user: "تم إضافة مستخدم جديد", activity_new_analysis: "تم إجراء تحليل جديد", activity_settings_update: "تم تحديث إعدادات النظام",
                 stat_total_users: "إجمالي المستخدمين", stat_total_analyses: "إجمالي التحاليل", stat_pneumonia_cases: "حالات الالتهاب", stat_accuracy: "معدل الدقة",
                 add_user_title: "إضافة مستخدم جديد", username_label: "اسم المستخدم", email_label: "البريد الإلكتروني", role_label: "النوع",
                 role_patient: "مريض", role_doctor: "طبيب", role_admin: "مسؤول", add_user_btn: "إضافة المستخدم",
@@ -1011,7 +1090,10 @@
             },
             en: {
                 admin_dashboard_title: "Admin Dashboard", admin_panel_title: "⚙️ Admin", admin_panel_subtitle: "Control Panel", admin_welcome_title: "🏥 PneumoDetect Admin Dashboard",
-                menu_dashboard: "Dashboard", menu_users: "Users", menu_analyses: "Analyses", menu_settings: "Settings",
+                menu_home: "Home", menu_dashboard: "Dashboard", menu_users: "Users", menu_analyses: "Analyses", menu_settings: "Settings",
+                home_title: "🏠 Home Page", welcome_message: "Welcome to PneumoDetect System", home_description: "An advanced system for pneumonia detection using artificial intelligence techniques. Through this interface, you can manage users, medical analyses, and monitor system performance.",
+                quick_start: "Get Started", quick_analyze: "New Analysis", quick_reports: "Reports", recent_activities: "Recent Activities",
+                activity_new_user: "New user added", activity_new_analysis: "New analysis performed", activity_settings_update: "System settings updated",
                 stat_total_users: "Total Users", stat_total_analyses: "Total Analyses", stat_pneumonia_cases: "Pneumonia Cases", stat_accuracy: "Accuracy Rate",
                 add_user_title: "Add New User", username_label: "Username", email_label: "Email", role_label: "Role",
                 role_patient: "Patient", role_doctor: "Doctor", role_admin: "Admin", add_user_btn: "Add User",
@@ -1233,8 +1315,46 @@
             }
         }
         
-        // ... (loadAnalyses, handleAddUser, handleSaveSettings, editUser, deleteUser remain the same) ...
+        async function loadAnalyses() {
+            const tbody = document.getElementById('analyses-table-body');
+            tbody.innerHTML = `<tr><td colspan="6"><div class="skeleton skeleton-row"></div></td></tr>`.repeat(3);
+            
+            try {
+                // Real API call to /api/admin/analyses
+                const response = await fetch('/api/admin/analyses', {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRF-Token': getCsrfToken()
+                    },
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) throw new Error('Network response was not ok');
+                const result = await response.json();
+                
+                const analyses = result.data?.items || [];
 
+                if (analyses.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center">لا توجد بيانات</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = analyses.map(analysis => `
+                    <tr>
+                        <td>${analysis.id}</td>
+                        <td>${analysis.patient_name}</td>
+                        <td>${analysis.doctor_name}</td>
+                        <td>${new Date(analysis.date).toLocaleDateString()}</td>
+                        <td><span class="badge ${analysis.result === 'pneumonia' ? 'badge-danger' : 'badge-success'}">${analysis.result}</span></td>
+                        <td><span class="badge ${analysis.status === 'completed' ? 'badge-success' : 'badge-warning'}">${analysis.status}</span></td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                showNotification(t('error_network'), 'error');
+                tbody.innerHTML = `<tr><td colspan="6" class="error-message">${t('error_network')}</td></tr>`;
+            }
+        }
+        
         // --- Action Handlers (with Enhanced Validation) ---
         async function handleAddUser(e) {
             e.preventDefault();
@@ -1317,7 +1437,32 @@
         }
 
         function editUser(userId) { showNotification(`تعديل المستخدم ${userId} (محاكاة)`, 'info'); }
-        function deleteUser(userId) { openModal(t('confirm_delete_user'), () => { showNotification(`تم حذف المستخدم ${userId} (محاكاة)`, 'success'); loadUsers(); }); }
+        async function deleteUser(userId) {
+            openModal(t('confirm_delete_user'), async () => {
+                try {
+                    const response = await fetch(`/api/admin/users/${userId}/status`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': getCsrfToken()
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ is_active: false })
+                    });
+
+                    let payload = {};
+                    try { payload = await response.json(); } catch (e) {}
+
+                    if (!response.ok) throw new Error(payload.message || t('error_network'));
+
+                    showNotification(t('success_user_deleted') || 'تم حذف المستخدم بنجاح', 'success');
+                    loadUsers();
+                } catch (error) {
+                    console.error('Error deleting user:', error);
+                    showNotification(error.message || t('error_network'), 'error');
+                }
+            });
+        }
         
         function confirmDangerAction(action) {
              let message = '';
@@ -1327,13 +1472,15 @@
                 message = t('danger_zone_desc');
                 onConfirm = async () => {
                     try {
-                        // Real API call to /api/admin/clear-data
+                        // Real API call to /api/admin/clear-data (requires explicit confirmation)
                         const response = await fetch('/api/admin/clear-data', { 
                             method: 'POST',
                             headers: {
+                                'Content-Type': 'application/json',
                                 'X-CSRF-Token': getCsrfToken()
                             },
-                            credentials: 'include'
+                            credentials: 'include',
+                            body: JSON.stringify({ confirm_clearance: 'CLEAR_ALL_DATA' })
                         });
                         const result = await response.json();
 
@@ -1354,7 +1501,6 @@
 
         // --- Modal Functions (with Focus Trap) ---
         function openModal(message, onConfirm) {
-            // ... (Function body remains the same) ...
             const modal = document.getElementById('confirm-modal');
             document.getElementById('modal-message').textContent = message;
             document.getElementById('confirm-btn').onclick = () => { onConfirm(); closeModal(); };
@@ -1481,7 +1627,6 @@
         }
 
         function setTheme(theme) {
-            // ... (Function body remains the same) ...
             appState.isDarkMode = theme === 'dark';
             document.documentElement.setAttribute('data-theme', theme);
             
@@ -1494,14 +1639,12 @@
         }
 
         function toggleTheme() {
-            // ... (Function body remains the same) ...
             const newTheme = appState.isDarkMode ? 'light' : 'dark';
             setTheme(newTheme);
         }
 
         function showNotification(message, type) {
-            // ... (Function body remains the same) ...
-             // Create notification element
+            // Create notification element
             const notification = document.createElement('div');
             notification.className = `notification notification-${type}`;
             notification.textContent = message;
@@ -1563,10 +1706,14 @@
         translations.ar.status_active = "نشط";
         translations.ar.status_inactive = "غير نشط";
         translations.ar.confirm_delete_user = "هل أنت متأكد من حذف هذا المستخدم؟ لا يمكن التراجع عن هذا الإجراء.";
+        translations.ar.success_user_deleted = "تم حذف المستخدم بنجاح";
+        translations.ar.error_loading_data = "فشل تحميل البيانات";
 
         translations.en.status_active = "Active";
         translations.en.status_inactive = "Inactive";
         translations.en.confirm_delete_user = "Are you sure you want to delete this user? This action cannot be undone.";
+        translations.en.success_user_deleted = "User deleted successfully";
+        translations.en.error_loading_data = "Failed to load data";
     </script>
     <!-- Core JavaScript Module -->
     <script src="{{ url_for('static', filename='core.js') }}"></script>

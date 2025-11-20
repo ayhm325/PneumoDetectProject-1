@@ -1,9 +1,9 @@
 import logging
-import traceback
-from flask import Blueprint, request, jsonify, current_app
+import re  # تمت الإضافة للتحقق من قوة كلمة المرور
+from flask import Blueprint, request, jsonify, current_app, redirect
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import db
+from app import db, csrf
 from app.models import User
 from app.utils import APIResponse, handle_errors, validate_required_fields, rate_limit_per_user, sanitize_input, AuditLogger
 
@@ -13,11 +13,28 @@ logger = logging.getLogger(__name__)
 auth = Blueprint('auth', __name__)
 
 
+def is_strong_password(password):
+    """التحقق من قوة كلمة المرور."""
+    if len(password) < 8:
+        return False
+    # التحقق من وجود حرف كبير، حرف صغير، رقم، ورمز
+    if not re.search(r"[A-Z]", password):
+        return False
+    if not re.search(r"[a-z]", password):
+        return False
+    if not re.search(r"[0-9]", password):
+        return False
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return False
+    return True
+
+
 # =========================================================================
 # 1. تسجيل مستخدم جديد (/register)
 # =========================================================================
 @auth.route('/register', methods=['POST'])
-@rate_limit_per_user(max_requests=5, window_seconds=300)  # 5 محاولات كل 5 دقائق
+@csrf.exempt
+@rate_limit_per_user(max_requests=5, window_seconds=60)  # 5 محاولات كل 1 دقيقة
 @validate_required_fields(['username', 'email', 'password'])
 @handle_errors
 def register():
@@ -29,7 +46,9 @@ def register():
         username = sanitize_input(data.get('username', ''), 'username')
         email = sanitize_input(data.get('email', ''), 'email')
         password = data.get('password', '')
-        role = sanitize_input(data.get('userType', data.get('role', 'patient')), 'text')
+        
+        # --- إصلاح: تثبيت دور المستخدم على 'patient' ---
+        role = 'patient' # لا تسمح للمستخدم باختيار الدور
         
         # تسجيل بيانات الطلب للتشخيص
         logger.info(f"محاولة تسجيل جديد: username='{username}', email='{email}', role='{role}'")
@@ -37,37 +56,25 @@ def register():
         # التحقق من عدم الفراغ بعد التنظيف
         if not username or len(username) < 3:
             logger.warning(f"فشل التحقق من اسم المستخدم: '{username}'")
-            response, code = APIResponse.error('اسم المستخدم غير صالح بعد التطهير', 400, 'USERNAME_INVALID')
+            response, code = APIResponse.error('اسم المستخدم غير صالح', 400, 'USERNAME_INVALID')
             return jsonify(response), code
         
-        # التحقق من صحة البريد
-        if not email:
+        # --- تحسين: التحقق من صحة البريد الإلكتروني ---
+        if not email or not User.validate_email(email):
             logger.warning(f"فشل التحقق من البريد: '{email}'")
             response, code = APIResponse.error('البريد الإلكتروني غير صالح', 400, 'EMAIL_INVALID')
             return jsonify(response), code
         
-        # التحقق من قوة كلمة المرور
-        if len(password) < 8:
-            logger.warning(f"فشل التحقق من قوة كلمة المرور: طول={len(password)}")
-            response, code = APIResponse.error('كلمة المرور يجب أن تكون 8 أحرف على الأقل', 400, 'PASSWORD_TOO_SHORT')
+        # --- تحسين: التحقق من قوة كلمة المرور ---
+        if not is_strong_password(password):
+            logger.warning(f"فشل التحقق من قوة كلمة المرور للمستخدم '{username}'")
+            response, code = APIResponse.error('كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل وتشمل أحرف كبيرة وصغيرة وأرقام ورموز', 400, 'PASSWORD_WEAK')
             return jsonify(response), code
         
-        # التحقق من أن الدور مسموح
-        if role not in ['patient', 'doctor']:
-            logger.warning(f"فشل التحقق من الدور: '{role}'")
-            response, code = APIResponse.error('دور غير مسموح', 400, 'ROLE_INVALID')
-            return jsonify(response), code
-        
-        # التحقق من عدم تكرار اسم المستخدم
-        if User.query.filter_by(username=username).first():
-            logger.warning(f"محاولة تسجيل باسم مستخدم موجود: {username}")
-            response, code = APIResponse.error('اسم المستخدم مستخدم من قبل', 409, 'USERNAME_EXISTS')
-            return jsonify(response), code
-        
-        # التحقق من عدم تكرار البريد
-        if User.query.filter_by(email=email).first():
-            logger.warning(f"محاولة تسجيل ببريد موجود: {email}")
-            response, code = APIResponse.error('البريد الإلكتروني مسجل مسبقاً', 409, 'EMAIL_EXISTS')
+        # --- تحسين: منع تعداد المستخدمين ---
+        if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
+            logger.warning(f"محاولة تسجيل ببيانات موجودة: username='{username}', email='{email}'")
+            response, code = APIResponse.error('اسم المستخدم أو البريد الإلكتروني مستخدم بالفعل', 409, 'USER_EXISTS')
             return jsonify(response), code
         
         # تشفير كلمة المرور
@@ -101,31 +108,41 @@ def register():
         return jsonify(response), code
         
     except Exception as e:
-        print("\n===== TRACEBACK START =====")
-        traceback.print_exc()
-        print("===== TRACEBACK END =====\n")
-
+        # --- تحسين: إزالة طباعة الأخطاء ---
         logger.error(f"خطأ غير متوقع في التسجيل: {str(e)}", exc_info=True)
         db.session.rollback()
-        return jsonify(APIResponse.error(f"فشل التسجيل: {str(e)}", 500, 'REGISTRATION_FAILED')), 500
-
+        response, code = APIResponse.error(f"فشل التسجيل: {str(e)}", 500, 'REGISTRATION_FAILED')
+        return jsonify(response), code
 
 
 # =========================================================================
 # 2. تسجيل الدخول (/login)
 # =========================================================================
-@auth.route('/login', methods=['POST'])
-@rate_limit_per_user(max_requests=10, window_seconds=300)  # 10 محاولات كل 5 دقائق
-@validate_required_fields(['username', 'password'])
+@auth.route('/login', methods=['POST', 'GET'])
+@csrf.exempt
+@rate_limit_per_user(max_requests=10, window_seconds=60)  # 10 محاولات كل 1 دقيقة
 @handle_errors
 def login():
     """تسجيل دخول المستخدم وإنشاء جلسة."""
+    logger.info("[LOGIN] Function entered")
     try:
-        data = request.get_json()
-        
-        username = data.get('username', '').strip()
-        password = data.get('password', '')
-        remember_me = data.get('remember_me', False)
+        # Support both JSON POST and form data (GET with query params or POST form)
+        if request.method == 'GET' or request.content_type != 'application/json':
+            # Get from query parameters or form data
+            username = request.args.get('username', request.form.get('username', '')).strip()
+            password = request.args.get('password', request.form.get('password', ''))
+            remember_me = request.args.get('remember_me', request.form.get('remember_me', False))
+            # Convert string 'on' or 'true' to boolean
+            if isinstance(remember_me, str):
+                remember_me = remember_me.lower() in ['on', 'true', '1', 'yes']
+            logger.info(f"[LOGIN] data from query/form: username={username}, remember_me={remember_me}")
+        else:
+            # Get from JSON
+            data = request.get_json() or {}
+            logger.info(f"[LOGIN] data from request.get_json(): {data}")
+            username = data.get('username', '').strip()
+            password = data.get('password', '')
+            remember_me = data.get('remember_me', False)
         
         # تسجيل بيانات الطلب للتشخيص
         logger.info(f"محاولة تسجيل دخول: username='{username}', remember_me={remember_me}")
@@ -161,6 +178,12 @@ def login():
         else:
             redirect_url = '/patient'
 
+        # If request came from query parameters (GET/form), redirect directly
+        if request.method == 'GET' or request.content_type != 'application/json':
+            logger.info(f"Redirecting user {username} to {redirect_url}")
+            return redirect(redirect_url)
+        
+        # Otherwise return JSON for AJAX requests
         response, code = APIResponse.success(
             data={
                 'username': user.username,
@@ -258,10 +281,10 @@ def change_password():
             response, code = APIResponse.error('كلمات المرور الجديدة غير متطابقة', 400, 'PASSWORD_MISMATCH')
             return jsonify(response), code
         
-        # التحقق من قوة كلمة المرور الجديدة
-        if len(new_password) < 8:
-            logger.warning(f"محاولة تغيير كلمة المرور: كلمة المرور الجديدة قصيرة للمستخدم {current_user.username}")
-            response, code = APIResponse.error('كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل', 400, 'PASSWORD_TOO_SHORT')
+        # --- تحسين: استخدام نفس التحقق من قوة كلمة المرور ---
+        if not is_strong_password(new_password):
+            logger.warning(f"محاولة تغيير كلمة المرور: كلمة المرور الجديدة ضعيفة للمستخدم {current_user.username}")
+            response, code = APIResponse.error('كلمة المرور الجديدة يجب أن تحتوي على 8 أحرف على الأقل وتشمل أحرف كبيرة وصغيرة وأرقام ورموز', 400, 'PASSWORD_WEAK')
             return jsonify(response), code
         
         # التحقق من كلمة المرور القديمة
@@ -318,6 +341,7 @@ def update_profile():
         email = data.get('email', '').lower().strip()
         
         if email:
+            # --- تحسين: استخدام نفس التحقق من البريد الإلكتروني ---
             if not User.validate_email(email):
                 logger.warning(f"محاولة تحديث البريد الإلكتروني ببريد غير صالح: {email}")
                 response, code = APIResponse.error('البريد الإلكتروني غير صالح', 400, 'EMAIL_INVALID')

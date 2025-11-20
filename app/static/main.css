@@ -234,28 +234,13 @@ button:focus-visible, .btn:focus-visible {
 .btn-primary {
     background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
     color: white;
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-primary::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
-}
-
-.btn-primary:hover::before {
-    left: 100%;
+    border: 2px solid var(--color-accent);
+    box-shadow: var(--shadow-md);
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(67, 97, 238, 0.3);
+    background: linear-gradient(135deg, var(--color-accent-hover), var(--color-accent));
+    box-shadow: var(--shadow-lg);
 }
 
 .btn-secondary {
@@ -407,13 +392,26 @@ header {
 }
 
 /* LTR specific styling for header actions */
-[dir="ltr"] .header-actions {
-    margin-left: auto; /* Push to the right in LTR */
+/* Force header layout: branding always right, header-actions always left */
+.header-container {
+    flex-direction: row !important;
+}
+.branding {
+    order: 1 !important;
+    justify-content: flex-end !important;
+    margin-right: 0 !important;
+    margin-left: auto !important;
+}
+.header-actions {
+    order: 2 !important;
+    justify-content: flex-start !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
 }
 
-/* Theme Toggle */
+/* ===== FIX START ===== */
+/* Theme Toggle Button */
 .theme-toggle {
-    background: none;
     border: none;
     color: var(--color-text-primary);
     font-size: var(--font-size-lg);
@@ -421,6 +419,7 @@ header {
     padding: var(--spacing-sm);
     border-radius: var(--radius-full);
     transition: var(--transition);
+    background-color: transparent;
 }
 
 .theme-toggle:hover {
@@ -430,6 +429,7 @@ header {
 [data-theme="dark"] .theme-toggle:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
+/* ===== FIX END ===== */
 
 /* Language Toggle */
 .lang-toggle {
@@ -752,12 +752,19 @@ header {
 /* Notification System */
 .notification-container {
     position: fixed;
-    top: var(--spacing-lg);
-    left: var(--spacing-lg);
+    top: var(--spacing-xl);
+    right: var(--spacing-xl);
+    left: auto;
     z-index: var(--z-tooltip);
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
+}
+
+/* RTL FIX for Notification Container */
+[dir="rtl"] .notification-container {
+    right: auto;
+    left: var(--spacing-xl);
 }
 
 .notification {
@@ -770,16 +777,17 @@ header {
     align-items: center;
     gap: var(--spacing-lg);
     min-width: 300px;
-    border-right: 5px solid var(--color-accent);
+    border-left: 5px solid var(--color-accent);
+    border-right: none;
     animation: slideIn var(--transition-slow);
 }
 
 .notification.error { 
-    border-right-color: var(--color-error); 
+    border-left-color: var(--color-error); 
 }
 
 .notification.success { 
-    border-right-color: var(--color-success); 
+    border-left-color: var(--color-success); 
 }
 
 .notification i { 

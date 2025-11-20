@@ -5,6 +5,7 @@ from transformers import AutoProcessor, AutoModelForImageClassification
 from PIL import Image
 import numpy as np
 import cv2
+from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ class MLProcessor:
         }
         self.is_loaded = False
 
-    def load_model(self, model_repo, hf_token=None):
+    def load_model(self, model_repo: str, hf_token: Optional[str] = None):
         """تحميل المعالج والنموذج ونقله إلى وحدة المعالجة."""
         try:
             logger.info(f'🔄 جاري تحميل النموذج من: {model_repo}')
@@ -60,8 +61,32 @@ class MLProcessor:
             self.is_loaded = False
             raise
 
+    def _preprocess_image(self, image_bytes: bytes) -> Image.Image:
+        """
+        دالة مساعدة لمعالجة الصورة الأولية.
+        
+        المعاملات:
+            image_bytes: بايتات الصورة
+        
+        الإرجاع:
+            PIL.Image: الصورة المعالجة
+        """
+        if not isinstance(image_bytes, bytes):
+            raise ValueError('image_bytes must be bytes')
+        
+        if len(image_bytes) == 0:
+            raise ValueError('image_bytes is empty')
+            
+        image = Image.open(BytesIO(image_bytes)).convert('RGB')
+        
+        # التحقق من حجم الصورة
+        if image.size[0] < 50 or image.size[1] < 50:
+            raise ValueError('الصورة صغيرة جداً')
+            
+        return image
+
     @torch.no_grad()
-    def analyze_image(self, image_bytes):
+    def analyze_image(self, image_bytes: bytes) -> Dict[str, Any]:
         """
         إجراء التحليل الأساسي للصورة.
         
@@ -69,24 +94,14 @@ class MLProcessor:
             image_bytes: بايتات الصورة
         
         الإرجاع:
-            dict: النتيجة والثقة والشرح والصورة
+            dict: النتيجة والثقة والشرح
         """
         if self.model is None:
-            raise Exception('Model is not loaded or available.')
-        
-        if not isinstance(image_bytes, bytes):
-            raise ValueError('image_bytes must be bytes')
-        
-        if len(image_bytes) == 0:
-            raise ValueError('image_bytes is empty')
+            raise RuntimeError('Model is not loaded or available.')
         
         try:
-            # 1. معالجة الصورة
-            image = Image.open(BytesIO(image_bytes)).convert('RGB')
-            
-            # التحقق من حجم الصورة
-            if image.size[0] < 50 or image.size[1] < 50:
-                raise ValueError('الصورة صغيرة جداً')
+            # 1. معالجة الصورة (باستخدام الدالة المساعدة)
+            image = self._preprocess_image(image_bytes)
             
             # 2. إدخال النموذج
             inputs = self.processor(images=image, return_tensors="pt").to(DEVICE)
@@ -108,7 +123,6 @@ class MLProcessor:
                 'result': label,
                 'confidence': confidence_percent,
                 'explanation': self.EXPLANATIONS.get(label, self.EXPLANATIONS['NORMAL']),
-                'image_pil': image,
                 'probabilities': {
                     'NORMAL': round(probabilities[0].item() * 100, 2),
                     'PNEUMONIA': round(probabilities[1].item() * 100, 2)
@@ -118,25 +132,32 @@ class MLProcessor:
         except Exception as e:
             logger.error(f'خطأ في تحليل الصورة: {str(e)}', exc_info=True)
             raise
+        finally:
+            # --- تحسين: تنظيف ذاكرة الـ GPU ---
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
-    def compute_saliency_map(self, image_pil):
+    def compute_saliency_map(self, image_bytes: bytes) -> Optional[Image.Image]:
         """
         حساب خريطة الإبراز (Saliency Map) باستخدام تقنية Gradient.
         
         المعاملات:
-            image_pil: صورة PIL
+            image_bytes: بايتات الصورة (تم تغييره من image_pil)
         
         الإرجاع:
             PIL.Image: خريطة الإبراز
         """
-        if self.model is None or not image_pil:
+        if self.model is None:
             logger.warning('لم يتم حساب خريطة الإبراز: النموذج غير محمل')
             return None
         
         try:
+            # --- تحسين: معالجة الصورة مباشرة من البايتات ---
+            image = self._preprocess_image(image_bytes)
+            
             # 1. إعداد الإدخال
-            image = image_pil.copy()
             inputs = self.processor(images=image, return_tensors="pt").to(DEVICE)
+            # نحتاج إلى حساب التدرجات، لذا نفعّلها
             inputs['pixel_values'].requires_grad_(True)
             
             # 2. حساب الـ Gradient
@@ -144,7 +165,7 @@ class MLProcessor:
             outputs = self.model(**inputs)
             predicted_index = outputs.logits.argmax(dim=1)
             target_score = outputs.logits[0, predicted_index]
-            target_score.backward()
+            target_score.backward(retain_graph=True) # retain_graph=True قد يكون ضرورياً في بعض الحالات
             
             # 3. الحصول على التدرجات
             gradients = inputs['pixel_values'].grad.abs().squeeze(0).cpu().numpy()
@@ -161,15 +182,16 @@ class MLProcessor:
             
             # 5. تحويلها إلى خريطة حرارة
             saliency_map = (saliency_map * 255).astype(np.uint8)
-            saliency_map_resized = cv2.resize(saliency_map, image_pil.size)
+            saliency_map_resized = cv2.resize(saliency_map, image.size)
             heatmap = cv2.applyColorMap(saliency_map_resized, cv2.COLORMAP_JET)
             
             # 6. دمج مع الصورة الأصلية
-            image_cv = np.array(image_pil.convert('RGB'))
-            image_cv = cv2.cvtColor(image_cv, cv2.COLOR_RGB2BGR)
+            image_cv = np.array(image)
+            # OpenCV uses BGR, so we convert the PIL image (RGB) to BGR
+            image_cv_bgr = cv2.cvtColor(image_cv, cv2.COLOR_RGB2BGR)
             
             alpha = 0.5
-            overlay = cv2.addWeighted(image_cv, 1 - alpha, heatmap, alpha, 0)
+            overlay = cv2.addWeighted(image_cv_bgr, 1 - alpha, heatmap, alpha, 0)
             
             # 7. تحويل النتيجة إلى PIL
             overlay_pil = Image.fromarray(cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB))
@@ -180,8 +202,12 @@ class MLProcessor:
         except Exception as e:
             logger.error(f'خطأ في حساب خريطة الإبراز: {str(e)}', exc_info=True)
             return None
+        finally:
+            # --- تحسين: تنظيف ذاكرة الـ GPU ---
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
     
-    def get_model_info(self):
+    def get_model_info(self) -> Dict[str, Any]:
         """الحصول على معلومات النموذج."""
         if not self.is_loaded:
             return {'error': 'Model not loaded'}

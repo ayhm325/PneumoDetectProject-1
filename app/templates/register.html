@@ -75,25 +75,56 @@
 
         /* --- Header --- */
         header {
-            background-color: var(--white-color);
-            box-shadow: var(--box-shadow);
-            padding: 15px 30px;
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: var(--transition);
+            min-height: 80px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            z-index: 100;
+            padding: 32px 40px 32px 40px;
         }
 
         .branding {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 1.5rem;
-            font-weight: 700;
+            gap: 18px;
+            font-size: 2.2rem;
+            font-weight: 800;
             color: var(--primary-color);
+            position: absolute;
+            right: 40px;
+            height: 100%;
         }
 
         .header-actions { display: flex; align-items: center; gap: 20px; }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: absolute;
+            left: 30px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--dark-color);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 50px;
+            transition: var(--transition);
+        }
+
+        .nav-link:hover {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+        }
 
         .theme-toggle {
             background: none;
@@ -158,7 +189,7 @@
 
         .welcome-section {
             background: linear-gradient(135deg, rgba(0, 122, 122, 0.9), rgba(0, 92, 92, 0.9)), 
-                        url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80') center/cover;
+                        url('/static/assets/images/register-bg.svg') center/cover;
             color: var(--white-color);
             text-align: center;
             gap: 30px;
@@ -217,17 +248,47 @@
         .form-control.success { border-color: var(--success-color); }
 
         .password-group { position: relative; }
+        .password-group .form-control {
+            padding-right: 45px;
+        }
+        [dir="ltr"] .password-group .form-control {
+            padding-right: 15px;
+            padding-left: 45px;
+        }
+
         .password-toggle {
             position: absolute;
-            right: 15px;
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
             color: var(--gray-color);
             cursor: pointer;
+            z-index: 2;
+            padding: 5px;
+            border-radius: 4px;
+            transition: var(--transition);
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        [dir="ltr"] .password-toggle { right: auto; left: 15px; }
+        
+        /* RTL: Icon on right side of input field */
+        [dir="rtl"] .password-toggle {
+            right: 12px;
+        }
+        
+        /* LTR: Icon on left side of input field */
+        [dir="ltr"] .password-toggle {
+            left: 12px;
+        }
+        
+        .password-toggle:hover {
+            color: var(--tech-accent-color);
+            background-color: rgba(67, 97, 238, 0.1);
+        }
 
         .error-text, .feedback-text {
             font-size: 0.85rem;
@@ -349,7 +410,7 @@
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             border-top: 2px solid white;
-            width: 16px;
+            width:16px;
             height: 16px;
             animation: spin 1s linear infinite;
         }
@@ -438,21 +499,20 @@
     </style>
 </head>
 <body role="application">
-    <!-- Skip to Main Content -->
-    <a href="#main-content" class="skip-to-main" aria-label="اذهب إلى نموذج التسجيل">
-        <span data-i18n="skip_to_main">اذهب إلى نموذج التسجيل</span>
-    </a>
-
     <!-- Notification Container -->
     <div class="notification-container" id="notification-container"></div>
 
     <!-- Header -->
     <header role="banner">
-        <div class="branding">
+        <div class="branding" style="position: absolute; right: 30px; left: auto; direction: ltr;">
             <i class="fas fa-lungs" aria-hidden="true"></i>
             <h1>PneumoDetect</h1>
         </div>
-        <div class="header-actions">
+        <div class="header-actions" style="position: absolute; left: 30px; right: auto; flex-direction: row;">
+            <a href="index.html" class="nav-link" aria-label="الرئيسية">
+                <i class="fas fa-home"></i>
+                <span data-i18n="nav_home">الرئيسية</span>
+            </a>
             <button class="theme-toggle" id="theme-toggle" aria-label="تبديل الوضع الليلي">
                 <i class="fas fa-moon" id="theme-icon"></i>
             </button>
@@ -687,7 +747,7 @@
         // Translations
         const translations = {
             ar: {
-                skip_to_main: "اذهب إلى نموذج التسجيل",
+                nav_home: "الرئيسية",
                 register_welcome_title: "انضم إلى PneumoDetect اليوم",
                 register_welcome_subtitle: "أنشئ حسابك الآن وابدأ رحلتك نحو تشخيصات طبية أسرع وأكثر دقة باستخدام تقنيات الذكاء الاصطناعي المتقدمة.",
                 home_card1_title: "⚡ تحليل فوري", home_card1_desc: "احصل على نتائج دقيقة في ثوانٍ معدلة.",
@@ -730,12 +790,12 @@
                 register_error: "فشل إنشاء الحساب. يرجى المحاولة مرة أخرى."
             },
             en: {
-                skip_to_main: "Go to registration form",
+                nav_home: "Home",
                 register_welcome_title: "Join PneumoDetect Today",
                 register_welcome_subtitle: "Create your account now and start your journey towards faster and more accurate medical diagnoses using advanced AI technologies.",
                 home_card1_title: "⚡ Instant Analysis", home_card1_desc: "Get accurate results in seconds.",
                 home_card2_title: "✅ Specialized Review", home_card2_desc: "Request a review from certified doctors.",
-                home_card3_title: "🔒 High Security", home_card3_desc: "Your data is protected with the highest encryption standards.",
+                home_card3_title: "🔒 High Security", home_card3_desc: "Your data is protected with highest encryption standards.",
                 register_title: "📝 Create New Account",
                 register_user_type_label: "Account Type",
                 register_patient_option: "Patient",
@@ -758,11 +818,11 @@
                 password_strong: "Strong",
                 register_confirm_label: "Confirm Password",
                 register_confirm_placeholder: "Confirm your password",
-                register_agree_terms: "I agree to the",
+                register_agree_terms: "I agree to",
                 register_terms_link: "Terms of Service",
                 register_and: "and",
                 register_privacy_link: "Privacy Policy",
-                register_email_verification_notice: "A verification link will be sent to your email to activate the account",
+                register_email_verification_notice: "A verification link will be sent to your email to activate account",
                 register_submit_btn: "Create Account",
                 register_has_account: "Already have an account?",
                 register_login_link: "Log in",
@@ -983,7 +1043,14 @@
                 const userType = document.querySelector('input[name="userType"]:checked').value;
                 const formData = new FormData(form);
                 const data = Object.fromEntries(formData.entries());
-                data.role = userType; // Add role to data object
+                data.userType = userType; // Add userType to data object
+                // Make sure we have all required fields
+                if (!data.username || !data.email || !data.password) {
+                    showNotification(t('register_error') || 'Please fill all required fields', 'error');
+                    registerBtn.disabled = false;
+                    registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> ' + t('register_submit_btn');
+                    return;
+                }
 
                 registerBtn.disabled = true;
                 registerBtn.innerHTML = '<span class="loading-spinner"></span> جاري التسجيل...';

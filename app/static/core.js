@@ -946,10 +946,11 @@ const PneumoApp = (function() {
                 const success = await Auth.login(username, password, rememberMe);
                 
                 if (success) {
-                    // التوجيه بناءً على دور المستخدم
-                    const redirectUrl = Auth.getCurrentUser().role === 'doctor' ? '/doctor' : 
-                                        Auth.getCurrentUser().role === 'admin' ? '/admin' : '/patient';
-                    
+                    // التوجيه بناءً على دور المستخدم — تحقق دفاعي من أن المستخدم مُعرّف
+                    const currentUser = Auth.getCurrentUser() || {};
+                    const role = currentUser && currentUser.role ? currentUser.role : 'patient';
+                    const redirectUrl = role === 'doctor' ? '/doctor' : role === 'admin' ? '/admin' : '/patient';
+
                     // الانتظار قليلاً لعرض رسالة النجاح
                     setTimeout(() => {
                         window.location.replace(redirectUrl);
@@ -1706,7 +1707,7 @@ const PneumoApp = (function() {
                         <tr>
                             <td>${user.username}</td>
                             <td>${user.email}</td>
-                            <td><span class="badge badge-${user.role}">${Admin.getRoleName(user.role)}</span></td>
+                            <td><span class="badge badge-${user.role || 'unknown'}">${Admin.getRoleName(user.role)}</span></td>
                             <td><span class="badge ${user.is_active ? 'badge-active' : 'badge-inactive'}">${user.is_active ? Utils.t('status_active') : Utils.t('status_inactive')}</span></td>
                             <td>
                                 <div class="action-buttons">
@@ -1984,7 +1985,7 @@ const PneumoApp = (function() {
                             }
                             io.unobserve(img);
                         });
-                    }, { rootMargin: '200px' });
+                    }, { rootMargin: '400px' });
 
                     document.querySelectorAll('img[data-src]').forEach(img => io.observe(img));
 
@@ -2014,6 +2015,31 @@ const PneumoApp = (function() {
                             mo.observe(document.body, { childList: true, subtree: true });
                         } catch(e) { /* ignore */ }
                     }
+
+                    // Fallback for environments where IntersectionObserver callbacks may not fire
+                    // (headless browsers / strict timing). After a short delay, swap any remaining
+                    // `data-src` attributes into `src` so tests and clients can still load images.
+                    setTimeout(() => {
+                        try {
+                            const remaining = document.querySelectorAll('img[data-src]');
+                            if (remaining.length) {
+                                remaining.forEach(img => {
+                                    try {
+                                        const ds = img.getAttribute('data-src') || img.dataset.src;
+                                        if (ds) {
+                                            // Preload via Image() and then assign src to start loading promptly
+                                            try {
+                                                const __pre = new Image();
+                                                __pre.src = ds;
+                                            } catch(_e) {}
+                                            try { img.setAttribute('src', ds); } catch(_e) { img.src = ds; }
+                                            try { img.removeAttribute('data-src'); } catch(_e) {}
+                                        }
+                                    } catch(e) {}
+                                });
+                            }
+                        } catch (e) {}
+                    }, 1200);
                 }
             } catch (e) {
                 Utils.log('error', 'Progressive images init failed', e);

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="regGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1920" height="1080" fill="url(#regGrad)"/>
+  
+  <!-- Network Nodes -->
+  <g opacity="0.1" stroke="#a78bfa" stroke-width="2" fill="none">
+    <circle cx="300" cy="200" r="40"/>
+    <circle cx="800" cy="150" r="50"/>
+    <circle cx="1400" cy="300" r="45"/>
+    <line x1="300" y1="200" x2="800" y2="150"/>
+    <line x1="800" y1="150" x2="1400" y2="300"/>
+  </g>
+  
+  <!-- Data Points -->
+  <g opacity="0.12" fill="#c4b5fd">
+    <circle cx="200" cy="850" r="15"/>
+    <circle cx="600" cy="950" r="12"/>
+    <circle cx="1200" cy="880" r="18"/>
+    <circle cx="1700" cy="750" r="14"/>
+  </g>
+</svg>

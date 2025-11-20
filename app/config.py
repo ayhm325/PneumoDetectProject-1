@@ -69,8 +69,8 @@ class Config:
     # JSON
     JSON_SORT_KEYS = False
     JSONIFY_PRETTYPRINT_REGULAR = True
-    # Flask-WTF CSRF (enabled by default; tests may disable it in TestingConfig)
-    WTF_CSRF_ENABLED = True
+    # Flask-WTF CSRF (disabled for stateless API; forms use alternative protection)
+    WTF_CSRF_ENABLED = False
 
 
 class DevelopmentConfig(Config):

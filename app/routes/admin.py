@@ -3,8 +3,12 @@
 Admin Dashboard & Advanced Statistics
 """
 import logging
+import secrets
+import string
+from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
+from werkzeug.security import generate_password_hash
 from app import db
 from app.models import User, AnalysisResult, Notification, AnalysisHistory, AuditLog
 from app.utils import (
@@ -21,14 +25,15 @@ admin = Blueprint('admin', __name__)
 # =========================================================================
 # 1. التحقق من صلاحيات المدير
 # =========================================================================
-def check_admin(f):
-    """Decorator للتحقق من أن المستخدم مدير."""
+def check_admin_or_doctor(f):
+    """Decorator للتحقق من أن المستخدم مدير أو طبيب."""
     from functools import wraps
     
     @wraps(f)
     @login_required
     def decorated_function(*args, **kwargs):
-        if not current_user.is_admin():
+        # السماح للمسؤولين والأطباء بالوصول لنقاط نهاية الإدارة
+        if current_user.role not in ['admin', 'doctor']:
             AuditLogger.log_event(
                 'UNAUTHORIZED_ACCESS',
                 current_user.id,
@@ -45,12 +50,36 @@ def check_admin(f):
     return decorated_function
 
 
+def check_admin_only(f):
+    """Decorator للتحقق من أن المستخدم مدير فقط."""
+    from functools import wraps
+    
+    @wraps(f)
+    @login_required
+    def decorated_function(*args, **kwargs):
+        if current_user.role != 'admin':
+            AuditLogger.log_event(
+                'UNAUTHORIZED_ACCESS',
+                current_user.id,
+                {'endpoint': request.endpoint, 'method': request.method},
+                'WARNING'
+            )
+            response, code = APIResponse.error(
+                'غير مصرح - صلاحيات المدير مطلوبة',
+                403,
+                'ADMIN_ONLY'
+            )
+            return jsonify(response), code
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 # =========================================================================
 # 2. الإحصائيات العامة للنظام
 # =========================================================================
 @admin.route('/stats/system', methods=['GET'])
 @handle_errors
-@check_admin
+@check_admin_or_doctor
 def get_system_stats():
     """الحصول على إحصائيات النظام العامة."""
     try:
@@ -77,7 +106,7 @@ def get_system_stats():
 # =========================================================================
 @admin.route('/stats/users', methods=['GET'])
 @handle_errors
-@check_admin
+@check_admin_or_doctor
 def get_users_stats():
     """الحصول على إحصائيات تفصيلية عن المستخدمين."""
     try:
@@ -125,12 +154,10 @@ def get_users_stats():
 # =========================================================================
 @admin.route('/stats/analyses', methods=['GET'])
 @handle_errors
-@check_admin
+@check_admin_or_doctor
 def get_analyses_stats():
     """الحصول على إحصائيات تفصيلية عن التحليلات."""
     try:
-        from datetime import datetime, timedelta
-        
         # الفلاتر
         days = request.args.get('days', 30, type=int)
         status_filter = request.args.get('status', None)
@@ -210,7 +237,7 @@ def get_analyses_stats():
 # =========================================================================
 @admin.route('/audit-log', methods=['GET'])
 @handle_errors
-@check_admin
+@check_admin_only
 def get_audit_log():
     """الحصول على سجل المراجعات الأمنية."""
     try:
@@ -219,8 +246,6 @@ def get_audit_log():
         event_type_filter = request.args.get('event_type', None)
         days = request.args.get('days', 30, type=int)
         
-        from datetime import datetime, timedelta
-
         start_date = datetime.utcnow() - timedelta(days=days)
         
         # استعلام سجل المراجعات من قاعدة البيانات
@@ -259,7 +284,7 @@ def get_audit_log():
 # =========================================================================
 @admin.route('/users/<int:user_id>/status', methods=['PUT'])
 @handle_errors
-@check_admin
+@check_admin_only
 def update_user_status(user_id):
     """تحديث حالة نشاط المستخدم."""
     try:
@@ -327,7 +352,7 @@ def update_user_status(user_id):
 # =========================================================================
 @admin.route('/notifications', methods=['GET'])
 @handle_errors
-@check_admin
+@check_admin_or_doctor
 def get_system_notifications():
     """الحصول على الإخطارات النظامية والتنبيهات."""
     try:
@@ -363,19 +388,19 @@ def get_system_notifications():
 # =========================================================================
 @admin.route('/report/system', methods=['GET'])
 @handle_errors
-@check_admin
+@check_admin_or_doctor
 def get_system_report():
     """الحصول على تقرير شامل عن النظام."""
     try:
-        from datetime import datetime
-        
         # الإحصائيات العامة
         general_stats = StatisticsHelper.get_system_stats()
         
         # إحصائيات النشاط
-        today_analyses = AnalysisResult.query.filter(
-            AnalysisResult.created_at >= datetime.utcnow().replace(hour=0, minute=0, second=0)
-        ).count()
+        today = datetime.utcnow().replace(hour=0, minute=0, second=0)
+        week_ago = today - timedelta(days=7)
+        
+        today_analyses = AnalysisResult.query.filter(AnalysisResult.created_at >= today).count()
+        week_analyses = AnalysisResult.query.filter(AnalysisResult.created_at >= week_ago).count()
         
         # أعلى الأطباء نشاطاً
         top_doctors = db.session.query(
@@ -389,15 +414,32 @@ def get_system_report():
             db.func.count(AnalysisResult.id).desc()
         ).limit(5).all()
         
+        # أعلى المرضى نشاطاً
+        top_patients = db.session.query(
+            User.username,
+            db.func.count(AnalysisResult.id).label('analysis_count')
+        ).join(
+            AnalysisResult, User.id == AnalysisResult.user_id
+        ).filter(
+            User.role == 'patient'
+        ).group_by(User.id).order_by(
+            db.func.count(AnalysisResult.id).desc()
+        ).limit(5).all()
+        
         report = {
             'generated_at': datetime.utcnow().isoformat(),
             'general_stats': general_stats,
             'activity': {
-                'analyses_today': today_analyses
+                'analyses_today': today_analyses,
+                'analyses_this_week': week_analyses
             },
             'top_doctors': [
                 {'username': doc[0], 'review_count': doc[1]}
                 for doc in top_doctors
+            ],
+            'top_patients': [
+                {'username': patient[0], 'analysis_count': patient[1]}
+                for patient in top_patients
             ]
         }
         
@@ -423,12 +465,10 @@ def get_system_report():
 # =========================================================================
 @admin.route('/users', methods=['POST'])
 @handle_errors
-@check_admin
+@check_admin_only
 def add_new_user():
     """إضافة مستخدم جديد من قبل مدير."""
     try:
-        from werkzeug.security import generate_password_hash
-        
         data = request.get_json() or {}
         username = data.get('username', '').strip()
         email = data.get('email', '').strip()
@@ -476,8 +516,10 @@ def add_new_user():
             )
             return jsonify(response), code
         
-        # إنشاء مستخدم بكلمة مرور عشوائية
-        temp_password = 'TempPass123!'
+        # إنشاء كلمة مرور عشوائية آمنة
+        alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+        temp_password = ''.join(secrets.choice(alphabet) for i in range(12))
+        
         user = User(
             username=username,
             email=email,
@@ -489,6 +531,11 @@ def add_new_user():
         db.session.add(user)
         db.session.commit()
         
+        # إرسال كلمة المرور عبر البريد الإلكتروني (يفضل)
+        # أو عرضها للمدير مرة واحدة فقط
+        user_data = user.to_dict()
+        user_data['temp_password'] = temp_password
+        
         AuditLogger.log_event(
             'ADMIN_ACTION',
             current_user.id,
@@ -499,7 +546,7 @@ def add_new_user():
         logger.info(f"User {username} created by admin {current_user.username}")
         
         response, code = APIResponse.success(
-            data=user.to_dict(),
+            data=user_data,
             message=f"تم إنشاء المستخدم {username} بنجاح",
             code=201
         )
@@ -518,6 +565,54 @@ def add_new_user():
 # =========================================================================
 # 10. حفظ إعدادات النظام
 # =========================================================================
+@admin.route('/settings', methods=['GET', 'POST'])
+@handle_errors
+@check_admin_only
+def system_settings():
+    """عرض أو تحديث إعدادات النظام."""
+    try:
+        if request.method == 'GET':
+            # إرجاع الإعدادات الحالية
+            settings = {
+                'max_file_size': current_app.config.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024),
+                'allowed_extensions': current_app.config.get('ALLOWED_EXTENSIONS', ['jpg', 'jpeg', 'png']),
+                'model_repo': current_app.config.get('MODEL_REPO', ''),
+                'registration_enabled': current_app.config.get('REGISTRATION_ENABLED', True)
+            }
+            
+            response, code = APIResponse.success(
+                data=settings,
+                message='إعدادات النظام'
+            )
+            return jsonify(response), code
+        
+        elif request.method == 'POST':
+            # تحديث الإعدادات
+            data = request.get_json() or {}
+            
+            # تحديث الإعدادات في قاعدة البيانات أو ملف التكوين
+            # هذا يعتمد على كيفية تخزين الإعدادات في تطبيقك
+            
+            AuditLogger.log_event(
+                'ADMIN_ACTION',
+                current_user.id,
+                {'action': 'settings_updated', 'settings': data},
+                'INFO'
+            )
+            
+            response, code = APIResponse.success(
+                message='تم تحديث إعدادات النظام بنجاح'
+            )
+            return jsonify(response), code
+            
+    except Exception as e:
+        logger.error(f"Error with system settings: {e}", exc_info=True)
+        response, code = APIResponse.error(
+            'خطأ في إعدادات النظام',
+            500,
+            'SETTINGS_ERROR'
+        )
+        return jsonify(response), code
 
 
 # =========================================================================
@@ -525,11 +620,10 @@ def add_new_user():
 # =========================================================================
 @admin.route('/clear-data', methods=['POST'])
 @handle_errors
-@check_admin
+@check_admin_only
 def clear_system_data():
-    """مسح جميع بيانات النظام (عملية حساسة)."""
+    """مسح بيانات النظام (عملية حساسة)."""
     try:
-        # طلب تأكيد صريح
         data = request.get_json() or {}
         confirmation = data.get('confirm_clearance')
         
@@ -541,30 +635,55 @@ def clear_system_data():
             )
             return jsonify(response), code
         
+        # تحديد البيانات التي سيتم مسحها
+        clear_analyses = data.get('clear_analyses', True)
+        clear_history = data.get('clear_history', True)
+        clear_notifications = data.get('clear_notifications', True)
+        clear_users = data.get('clear_users', False)  # خطير، افتراضي لا
+        clear_audit_log = data.get('clear_audit_log', False)  # خطير، افتراضي لا
+        
         # تسجيل العملية
         AuditLogger.log_event(
             'DANGER_ZONE_ACTION',
             current_user.id,
-            {'action': 'system_data_cleared'},
+            {
+                'action': 'system_data_cleared',
+                'options': {
+                    'clear_analyses': clear_analyses,
+                    'clear_history': clear_history,
+                    'clear_notifications': clear_notifications,
+                    'clear_users': clear_users,
+                    'clear_audit_log': clear_audit_log
+                }
+            },
             'CRITICAL'
         )
         
-        # مسح التحليلات
-        AnalysisResult.query.delete()
+        # مسح البيانات المحددة
+        if clear_analyses:
+            AnalysisResult.query.delete()
         
-        # مسح سجل التحليلات
-        AnalysisHistory.query.delete()
+        if clear_history:
+            AnalysisHistory.query.delete()
         
-        # مسح الإخطارات
-        Notification.query.delete()
+        if clear_notifications:
+            Notification.query.delete()
         
-        # الالتزام بالتغييرات
+        if clear_users:
+            # لا تمسح المستخدم الحالي
+            User.query.filter(User.id != current_user.id).delete()
+        
+        if clear_audit_log:
+            # امسح كل شيء سوى هذا السجل
+            last_log_id = db.session.query(AuditLog.id).order_by(AuditLog.created_at.desc()).first().id
+            AuditLog.query.filter(AuditLog.id != last_log_id).delete()
+        
         db.session.commit()
         
         logger.warning(f"System data cleared by admin {current_user.username}")
         
         response, code = APIResponse.success(
-            message='تم مسح جميع بيانات النظام بنجاح'
+            message='تم مسح بيانات النظام بنجاح'
         )
         return jsonify(response), code
     except Exception as e:

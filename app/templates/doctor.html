@@ -93,25 +93,38 @@
 
         /* --- Header --- */
         header {
-            background-color: var(--white-color);
-            box-shadow: var(--box-shadow);
-            padding: 15px 30px;
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: var(--transition);
+            min-height: 80px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            z-index: 100;
+            padding: 32px 40px 32px 40px;
         }
 
         .branding {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 1.5rem;
-            font-weight: 700;
+            gap: 18px;
+            font-size: 2.2rem;
+            font-weight: 800;
             color: var(--primary-color);
+            position: absolute;
+            right: 40px;
+            height: 100%;
         }
 
-        .header-actions { display: flex; align-items: center; gap: 20px; }
+        .header-actions { 
+            display: flex; 
+            align-items: center; 
+            gap: 20px;
+            position: absolute;
+            left: 30px;
+        }
 
         .theme-toggle {
             background: none;
@@ -558,6 +571,42 @@
         .notification-message { font-size: 0.9rem; color: var(--gray-color); }
         .notification-close { cursor: pointer; color: var(--gray-color); }
 
+        /* --- Analysis Panel Styles --- */
+        #analysis-panel {
+            margin-bottom: 30px;
+            display: none;
+        }
+        .analysis-modal-content {
+            background: var(--white-color);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--box-shadow);
+        }
+        .upload-area {
+            text-align: center;
+            padding: 40px 20px;
+            border: 2px dashed var(--gray-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .upload-area:hover, .upload-area.drag-over {
+            border-color: var(--tech-accent-color);
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        .upload-area i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--tech-accent-color);
+        }
+        .upload-area h3 {
+            margin-bottom: 10px;
+            color: var(--dark-color);
+        }
+        .upload-area p {
+            color: var(--gray-color);
+        }
+
         /* --- Responsive Design --- */
         @media (max-width: 768px) {
             main { padding: 20px; }
@@ -568,6 +617,23 @@
             .image-section { width: 100%; height: 200px; }
             .filters { flex-direction: column; align-items: stretch; }
             .filter-group { width: 100%; }
+            .header-actions {
+                position: static;
+                margin-top: 10px;
+                justify-content: center;
+            }
+            .branding {
+                position: static;
+                justify-content: center;
+                margin-bottom: 10px;
+            }
+            .notification-container {
+                left: 10px;
+                right: 10px;
+            }
+            .notification {
+                min-width: auto;
+            }
         }
     </style>
 </head>
@@ -590,9 +656,9 @@
             <button class="theme-toggle" id="theme-toggle" aria-label="تبديل الوضع الليلي">
                 <i class="fas fa-moon" id="theme-icon"></i>
             </button>
-                <button class="theme-toggle" id="print-btn" aria-label="طباعة الصفحة">
-                    <i class="fas fa-print"></i>
-                </button>
+            <button class="theme-toggle" id="print-btn" aria-label="طباعة الصفحة">
+                <i class="fas fa-print"></i>
+            </button>
             <div class="lang-toggle" role="group" aria-label="تغيير اللغة">
                 <button onclick="setLanguage('ar')" data-lang="ar" class="active" aria-pressed="true">AR</button>
                 <button onclick="setLanguage('en')" data-lang="en" aria-pressed="false">EN</button>
@@ -601,7 +667,7 @@
             <div class="user-info-section">
                 <div class="user-badge">
                     <i class="fas fa-user-md"></i> 
-                    <span id="current-user-info">الدكتور</span>
+                    <span id="current-user-info">{{ username }}</span>
                 </div>
                 <button class="btn btn-secondary" onclick="handleLogout()">
                     <i class="fas fa-sign-out-alt"></i> 
@@ -629,28 +695,28 @@
 
         <!-- Analysis Panel for Doctor -->
         <section id="analysis-panel" style="margin-bottom: 30px; display: none;" aria-live="polite">
-            <div class="analysis-modal-content" style="background: var(--white-color); border-radius: var(--border-radius); padding: 25px; box-shadow: var(--box-shadow);">
+            <div class="analysis-modal-content">
                 
                 <!-- Upload Area -->
-                <div id="upload-area-doctor" class="upload-area" style="text-align: center; padding: 40px 20px; border: 2px dashed var(--gray-color); border-radius: 12px; cursor: pointer;">
-                    <div style="font-size: 3rem; margin-bottom: 15px;"><i class="fas fa-cloud-upload-alt"></i></div>
-                    <h3>اسحب الصورة هنا أو انقر للتحميل</h3>
-                    <p style="color: var(--gray-color);">الصيغ المدعومة: JPG, PNG</p>
+                <div id="upload-area-doctor" class="upload-area">
+                    <div><i class="fas fa-cloud-upload-alt"></i></div>
+                    <h3 data-i18n="upload_area_title">اسحب الصورة هنا أو انقر للتحميل</h3>
+                    <p data-i18n="upload_area_desc">الصيغ المدعومة: JPG, PNG</p>
                 </div>
 
                 <!-- Preview Section -->
                 <div id="preview-section-doctor" style="display: none; margin-top: 20px;">
-                    <h4>معاينة الصورة</h4>
+                    <h4 data-i18n="preview_title">معاينة الصورة</h4>
                     <img id="preview-image-doctor" src="" alt="معاينة" style="max-width: 100%; max-height: 300px; border-radius: 8px; margin: 15px 0;">
                     <button class="btn btn-secondary" onclick="resetUploadDoctor()" style="margin-top: 10px;">
-                        <i class="fas fa-redo"></i> تغيير الصورة
+                        <i class="fas fa-redo"></i> <span data-i18n="change_image_btn">تغيير الصورة</span>
                     </button>
                 </div>
 
                 <!-- Loading State -->
                 <div id="loading-state-doctor" style="display: none; text-align: center; padding: 40px 20px;">
                     <div style="font-size: 2rem; margin-bottom: 20px;"><i class="fas fa-spinner fa-spin"></i></div>
-                    <p style="font-size: 1.1rem; margin-bottom: 20px;">جاري التحليل...</p>
+                    <p style="font-size: 1.1rem; margin-bottom: 20px;" data-i18n="analyzing_text">جاري التحليل...</p>
                     <div style="background: #e6e6e6; height: 10px; border-radius: 6px; overflow: hidden; margin-bottom: 10px;">
                         <div id="analysis-progress-bar-doctor" style="width: 0%; height: 100%; background: linear-gradient(90deg,#4361ee,#7209b7); transition: width 0.3s;"></div>
                     </div>
@@ -659,17 +725,17 @@
 
                 <!-- Results Section -->
                 <div id="analysis-result-doctor" style="display: none;">
-                    <h4>نتائج التحليل</h4>
+                    <h4 data-i18n="results_title">نتائج التحليل</h4>
                     <div id="result-card-content-doctor" style="margin-top: 20px;"></div>
                 </div>
 
                 <!-- Action Buttons -->
                 <div id="action-buttons-doctor" style="display: none; margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
                     <button class="btn btn-secondary" onclick="resetUploadDoctor()">
-                        <i class="fas fa-redo"></i> تحليل صورة أخرى
+                        <i class="fas fa-redo"></i> <span data-i18n="analyze_another_btn">تحليل صورة أخرى</span>
                     </button>
                     <button class="btn btn-primary" onclick="startAnalysisDoctor()" style="display: none;" id="analyze-btn-doctor">
-                        <i class="fas fa-microscope"></i> تحليل الآن
+                        <i class="fas fa-microscope"></i> <span data-i18n="analyze_now_btn">تحليل الآن</span>
                     </button>
                 </div>
             </div>
@@ -686,7 +752,7 @@
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); color: var(--success);">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); color: var(--success-color);">
                     <i class="fas fa-check-double"></i>
                 </div>
                 <div class="stat-info">
@@ -695,7 +761,7 @@
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: var(--error);">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: var(--error-color);">
                     <i class="fas fa-virus"></i>
                 </div>
                 <div class="stat-info">
@@ -704,7 +770,7 @@
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: var(--warning);">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: var(--warning-color);">
                     <i class="fas fa-chart-pie"></i>
                 </div>
                 <div class="stat-info">
@@ -810,7 +876,23 @@
                 error_saving_review: "فشل حفظ التقييم",
                 error_reject_requires_reason: "يجب إدخال سبب الرفض",
                 error_network: "فشل الاتصال بالخادم",
-                logout_btn: "خروج"
+                error_loading_data: "فشل تحميل البيانات",
+                logout_btn: "خروج",
+                pagination_prev: "السابقة",
+                pagination_next: "التالية",
+                upload_area_title: "اسحب الصورة هنا أو انقر للتحميل",
+                upload_area_desc: "الصيغ المدعومة: JPG, PNG",
+                preview_title: "معاينة الصورة",
+                change_image_btn: "تغيير الصورة",
+                analyzing_text: "جاري التحليل...",
+                results_title: "نتائج التحليل",
+                analyze_another_btn: "تحليل صورة أخرى",
+                analyze_now_btn: "تحليل الآن",
+                result_confidence_label: "درجة الثقة:",
+                result_analysis_label: "التشخيص الأولي:",
+                invalid_file_type: "الرجاء اختيار صورة JPEG أو PNG",
+                file_too_large: "الملف كبير جداً (الحد الأقصى: 50 MB)",
+                analysis_failed: "فشل التحليل"
             },
             en: {
                 home_btn: "Home",
@@ -845,7 +927,23 @@
                 error_saving_review: "Failed to save evaluation",
                 error_reject_requires_reason: "You must provide a reason for rejection",
                 error_network: "Failed to connect to server",
-                logout_btn: "Logout"
+                error_loading_data: "Failed to load data",
+                logout_btn: "Logout",
+                pagination_prev: "Previous",
+                pagination_next: "Next",
+                upload_area_title: "Drag image here or click to upload",
+                upload_area_desc: "Supported formats: JPG, PNG",
+                preview_title: "Image Preview",
+                change_image_btn: "Change Image",
+                analyzing_text: "Analyzing...",
+                results_title: "Analysis Results",
+                analyze_another_btn: "Analyze Another Image",
+                analyze_now_btn: "Analyze Now",
+                result_confidence_label: "Confidence Level:",
+                result_analysis_label: "Initial Diagnosis:",
+                invalid_file_type: "Please select a JPEG or PNG image",
+                file_too_large: "File too large (max: 50 MB)",
+                analysis_failed: "Analysis failed"
             }
         };
 
@@ -978,6 +1076,14 @@
             const themeToggle = document.getElementById('theme-toggle');
             if (themeToggle) {
                 themeToggle.addEventListener('click', toggleTheme);
+            }
+            
+            // Print button functionality
+            const printBtn = document.getElementById('print-btn');
+            if (printBtn) {
+                printBtn.addEventListener('click', () => {
+                    window.print();
+                });
             }
         }
 
@@ -1169,19 +1275,22 @@
                 return;
             }
 
+            appState.currentPage = pagination.page;
+            appState.totalPages = pagination.pages;
+
             const paginationContainer = document.getElementById('pagination');
             let html = '';
             
             if (pagination.page > 1) {
-                html += `<button onclick="currentPage = ${pagination.page - 1}; loadDoctorAnalyses(currentPage);" aria-label="الصفحة السابقة">${t('pagination_prev') || 'السابقة'}</button>`;
+                html += `<button onclick="appState.currentPage = ${pagination.page - 1}; loadDoctorAnalyses(appState.currentPage);" aria-label="${t('pagination_prev')}">${t('pagination_prev')}</button>`;
             }
 
             for (let i = 1; i <= pagination.pages; i++) {
-                html += `<button onclick="currentPage = ${i}; loadDoctorAnalyses(currentPage);" ${i === pagination.page ? 'class="active"' : ''} aria-label="الصفحة ${i}">${i}</button>`;
+                html += `<button onclick="appState.currentPage = ${i}; loadDoctorAnalyses(appState.currentPage);" ${i === pagination.page ? 'class="active"' : ''} aria-label="Page ${i}">${i}</button>`;
             }
 
             if (pagination.page < pagination.pages) {
-                html += `<button onclick="currentPage = ${pagination.page + 1}; loadDoctorAnalyses(currentPage);" aria-label="الصفحة التالية">${t('pagination_next') || 'التالية'}</button>`;
+                html += `<button onclick="appState.currentPage = ${pagination.page + 1}; loadDoctorAnalyses(appState.currentPage);" aria-label="${t('pagination_next')}">${t('pagination_next')}</button>`;
             }
 
             paginationContainer.innerHTML = html;
@@ -1203,7 +1312,7 @@
         async function confirmReject() {
             const reason = document.getElementById('reject-reason').value.trim();
             if (!reason) {
-                showNotification(t('error_reject_requires_reason') || 'يجب إدخال سبب الرفض', 'warning');
+                showNotification(t('error_reject_requires_reason'), 'warning');
                 return;
             }
 
@@ -1378,12 +1487,12 @@
 
         function handleFileSelectDoctor(file) {
             if (!['image/jpeg', 'image/png'].includes(file.type)) {
-                alert('الرجاء اختيار صورة JPEG أو PNG');
+                showNotification(t('invalid_file_type'), 'error');
                 return;
             }
 
             if (file.size > 50 * 1024 * 1024) {
-                alert('الملف كبير جداً (الحد الأقصى: 50 MB)');
+                showNotification(t('file_too_large'), 'error');
                 return;
             }
 
@@ -1444,7 +1553,7 @@
 
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(error.message || 'فشل التحليل');
+                    throw new Error(error.message || t('analysis_failed'));
                 }
 
                 const result = await response.json();
@@ -1493,7 +1602,7 @@
 
             } catch (error) {
                 if (loadingState) loadingState.style.display = 'none';
-                alert('❌ خطأ: ' + error.message);
+                showNotification('❌ ' + error.message, 'error');
                 console.error('Analysis error:', error);
             }
         }

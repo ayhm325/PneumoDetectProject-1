@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from sqlalchemy import or_, and_
 from app import db
 from app.models import AnalysisResult, User, AnalysisHistory, Notification
-from app.utils import APIResponse, handle_errors, validate_required_fields, paginate_query, AuditLogger, ensure_data_ownership
+from app.utils import APIResponse, handle_errors, validate_required_fields, paginate_query, AuditLogger
 from functools import wraps
 
 logger = logging.getLogger(__name__)
@@ -12,6 +12,13 @@ logger = logging.getLogger(__name__)
 # إنشاء Blueprint لمسارات الأطباء والمستخدمين
 doctor = Blueprint('doctor', __name__)
 
+"""
+ملاحظة هامة حول الوصول للمسارات في هذا الملف:
+- جميع المسارات أدناه تتطلب تسجيل الدخول (@login_required).
+- المسارات الحساسة (مثل المراجعة والإحصائيات) تتطلب دور طبيب أو مدير (@role_required).
+- هذا يضمن أن المستخدمين الذين يستخدمون ميزة "التحليل دون تسجيل" (guests)
+- لا يمكنهم الوصول إلى أي من وظائف لوحة التحكم أو بيانات المرضى.
+"""
 
 # =========================================================================
 # 1. Decorator للتحقق من الأدوار
@@ -44,33 +51,35 @@ def my_results():
     try:
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
-        sort_by = request.args.get('sort_by', 'created_at', type=str)
+        sort_by = request.args.get('sort_by', 'created_at_desc', type=str)
+        review_status = request.args.get('review_status', None, type=str)
         
         # التحقق من صحة معامل الترتيب
-        allowed_sorts = ['created_at', 'confidence', 'model_result']
-        if sort_by not in allowed_sorts:
-            sort_by = 'created_at'
+        sort_mapping = {
+            'created_at': AnalysisResult.created_at.desc(),
+            'created_at_desc': AnalysisResult.created_at.desc(),
+            'created_at_asc': AnalysisResult.created_at.asc(),
+            'confidence': AnalysisResult.confidence.desc(),
+            'model_result': AnalysisResult.model_result.asc()
+        }
+        sort_clause = sort_mapping.get(sort_by, AnalysisResult.created_at.desc())
         
         # بناء الاستعلام
         query = AnalysisResult.query.filter_by(user_id=current_user.id)
         
+        # تطبيق فلتر الحالة إذا تم تحديده
+        if review_status and review_status in ['pending', 'reviewed']:
+            query = query.filter_by(review_status=review_status)
+        
         # الترتيب
-        if sort_by == 'created_at':
-            query = query.order_by(AnalysisResult.created_at.desc())
-        elif sort_by == 'confidence':
-            query = query.order_by(AnalysisResult.confidence.desc())
-        elif sort_by == 'model_result':
-            query = query.order_by(AnalysisResult.model_result.asc())
+        query = query.order_by(sort_clause)
         
         # Pagination
         pagination_data = paginate_query(query, page, per_page)
         
-        # تحضير البيانات مع التحقق من الملكية
+        # تحضير البيانات (التحقق من الملكية مضمون بالاستعلام)
         results_list = []
         for result in pagination_data['items']:
-            # ✅ التحقق المزدوج من الملكية
-            ensure_data_ownership(result.user_id, current_user.id, current_user, admin_allowed=True)
-            
             reviewer_username = result.reviewer.username if result.reviewer else None
             
             results_list.append({
@@ -101,7 +110,7 @@ def my_results():
         return jsonify(response), code
         
     except Exception as e:
-        logger.error(f'خطأ في جلب النتائج: {str(e)}', exc_info=True)
+        logger.error(f'خطأ في جلب نتائج المستخدم: {str(e)}', exc_info=True)
         raise
 
 
@@ -111,6 +120,7 @@ def my_results():
 @doctor.route('/analyses', methods=['GET'])
 @handle_errors
 @login_required
+@role_required(['doctor', 'admin'])  # إصلاح أمني: التحقق من الدور
 def doctor_analyses():
     """يعرض قائمة التحاليل للمراجعة مع خيارات البحث والفلترة."""
     try:
@@ -134,17 +144,11 @@ def doctor_analyses():
         if status_filter != 'all':
             query = query.filter_by(review_status=status_filter)
         
-        # البحث عن المريض
+        # البحث عن المريض (محسن الأداء باستخدام join)
         if patient_name:
-            users = User.query.filter(
+            query = query.join(User, AnalysisResult.user_id == User.id).filter(
                 User.username.ilike(f'%{patient_name}%')
-            ).all()
-            user_ids = [u.id for u in users]
-            
-            if user_ids:
-                query = query.filter(AnalysisResult.user_id.in_(user_ids))
-            else:
-                query = query.filter(AnalysisResult.user_id == -1)  # لا توجد نتائج
+            )
         
         # فلترة حسب النتيجة
         if result_filter in ['NORMAL', 'PNEUMONIA']:
@@ -204,26 +208,27 @@ def doctor_analyses():
 @doctor.route('/review/<int:analysis_id>', methods=['POST'])
 @handle_errors
 @login_required
+@role_required(['doctor', 'admin'])  # إصلاح أمني: التحقق من الدور
 @validate_required_fields(['notes', 'status'])
 def review_analysis(analysis_id):
     """يقوم الطبيب/المدير بإضافة ملاحظات على تحليل معين."""
-    analysis = AnalysisResult.query.get_or_404(analysis_id)
-    data = request.get_json()
-    
-    notes = data.get('notes', '').strip()
-    status = data.get('status', 'reviewed').strip()
-    
-    # التحقق من صحة البيانات
-    if not notes or len(notes) < 5:
-        raise ValueError('الملاحظات يجب أن تكون 5 أحرف على الأقل')
-    
-    if len(notes) > 5000:
-        raise ValueError('الملاحظات كبيرة جداً (الحد الأقصى: 5000 حرف)')
-    
-    if not AnalysisResult.is_valid_status(status):
-        raise ValueError(f'حالة غير صالحة: {status}')
-    
     try:
+        analysis = AnalysisResult.query.get_or_404(analysis_id)
+        data = request.get_json()
+        
+        notes = data.get('notes', '').strip()
+        status = data.get('status', 'reviewed').strip()
+        
+        # التحقق من صحة البيانات
+        if not notes or len(notes) < 5:
+            raise ValueError('الملاحظات يجب أن تكون 5 أحرف على الأقل')
+        
+        if len(notes) > 5000:
+            raise ValueError('الملاحظات كبيرة جداً (الحد الأقصى: 5000 حرف)')
+        
+        if not AnalysisResult.is_valid_status(status):
+            raise ValueError(f'حالة غير صالحة: {status}')
+        
         # حفظ الحالة السابقة
         previous_status = analysis.review_status
         
@@ -293,6 +298,7 @@ def review_analysis(analysis_id):
 @doctor.route('/stats', methods=['GET'])
 @handle_errors
 @login_required
+@role_required(['doctor', 'admin'])  # إصلاح أمني: التحقق من الدور
 def doctor_stats():
     """الحصول على إحصائيات الطبيب."""
     try:
@@ -339,21 +345,26 @@ def doctor_stats():
 @login_required
 def generate_report(analysis_id):
     """الحصول على تقرير مفصل عن تحليل معين."""
-    analysis = AnalysisResult.query.get_or_404(analysis_id)
-    
-    # التحقق من الصلاحيات
-    is_owner = analysis.user_id == current_user.id
-    is_reviewer = analysis.doctor_id == current_user.id
-    is_admin = current_user.is_admin()
-    
-    if not (is_owner or is_reviewer or is_admin):
-        raise PermissionError('لا توجد صلاحية للوصول إلى هذا التقرير')
-    
-    response, code = APIResponse.success(
-        data=analysis.to_dict(include_paths=is_owner or is_reviewer or is_admin),
-        message='تم جلب التقرير بنجاح'
-    )
-    return jsonify(response), code
+    try:
+        analysis = AnalysisResult.query.get_or_404(analysis_id)
+        
+        # التحقق من الصلاحيات
+        is_owner = analysis.user_id == current_user.id
+        is_reviewer = analysis.doctor_id == current_user.id
+        is_admin = current_user.is_admin()
+        
+        if not (is_owner or is_reviewer or is_admin):
+            raise PermissionError('لا توجد صلاحية للوصول إلى هذا التقرير')
+        
+        response, code = APIResponse.success(
+            data=analysis.to_dict(include_paths=is_owner or is_reviewer or is_admin),
+            message='تم جلب التقرير بنجاح'
+        )
+        return jsonify(response), code
+        
+    except Exception as e:
+        logger.error(f'خطأ في إنشاء التقرير: {str(e)}', exc_info=True)
+        raise
 
 
 # =========================================================================
@@ -364,17 +375,17 @@ def generate_report(analysis_id):
 @login_required
 def get_analysis_history(analysis_id):
     """الحصول على سجل التغييرات والمراجعات للتحليل."""
-    analysis = AnalysisResult.query.get_or_404(analysis_id)
-    
-    # التحقق من الصلاحيات
-    is_owner = analysis.user_id == current_user.id
-    is_reviewer = analysis.doctor_id == current_user.id
-    is_admin = current_user.is_admin()
-    
-    if not (is_owner or is_reviewer or is_admin):
-        raise PermissionError('لا توجد صلاحية للوصول إلى السجل')
-    
     try:
+        analysis = AnalysisResult.query.get_or_404(analysis_id)
+        
+        # التحقق من الصلاحيات
+        is_owner = analysis.user_id == current_user.id
+        is_reviewer = analysis.doctor_id == current_user.id
+        is_admin = current_user.is_admin()
+        
+        if not (is_owner or is_reviewer or is_admin):
+            raise PermissionError('لا توجد صلاحية للوصول إلى السجل')
+        
         history_records = AnalysisHistory.query.filter_by(
             analysis_id=analysis_id
         ).order_by(AnalysisHistory.changed_at.desc()).all()

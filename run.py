@@ -1,6 +1,8 @@
 import sys
 import os
 import logging
+from flask import jsonify, request
+from flask_login import login_required, current_user
 
 # Set development environment early to avoid ProductionConfig checks
 os.environ.setdefault('FLASK_ENV', 'development')
@@ -50,10 +52,16 @@ def setup_initial_data():
         try:
             # تطبيق الترحيلات
             logger.info('🔄 جاري تطبيق الترحيلات...')
-            upgrade()
-            logger.info('✅ تم تطبيق الترحيلات بنجاح')
-            # Optional demo user seeding
-            seed_demo = os.getenv('SEED_DEMO', '0').lower() in ['1', 'true', 'yes']
+            try:
+                upgrade()
+                logger.info('✅ تم تطبيق الترحيلات بنجاح')
+            except Exception as e:
+                logger.warning(f'⚠️ تعذر تطبيق الترحيلات: {e}. سيتم إنشاء الجداول مباشرة.')
+                # إذا فشلت الترحيلات، أنشئ الجداول مباشرة
+                db.create_all()
+                logger.info('✅ تم إنشاء الجداول بنجاح')
+            # Optional demo user seeding (enabled by default in development)
+            seed_demo = os.getenv('SEED_DEMO', '1').lower() in ['1', 'true', 'yes']
             if seed_demo:
                 # إنشاء طبيب تجريبي
                 if not User.query.filter_by(username='dr_ahmad').first():
@@ -99,6 +107,45 @@ def setup_initial_data():
         except Exception as e:
             db.session.rollback()
             logger.error(f'❌ خطأ في إعداد البيانات: {e}', exc_info=True)
+
+
+# =====================================================
+# واجهات برمجة التطبيقات
+# =====================================================
+@app.route('/api/patient/analyses', methods=['GET'])
+@login_required
+def get_patient_analyses():
+    """Retrieve analyses for the logged-in patient."""
+    try:
+        page = request.args.get('page', 1, type=int)
+        status = request.args.get('status', 'all')
+        sort = request.args.get('sort', 'recent')
+
+        query = AnalysisResult.query.filter_by(user_id=current_user.id)
+
+        if status != 'all':
+            query = query.filter_by(review_status=status)
+
+        if sort == 'recent':
+            query = query.order_by(AnalysisResult.created_at.desc())
+        elif sort == 'oldest':
+            query = query.order_by(AnalysisResult.created_at.asc())
+
+        pagination = query.paginate(page=page, per_page=10, error_out=False)
+
+        data = {
+            'items': [result.to_dict() for result in pagination.items],
+            'page': pagination.page,
+            'per_page': pagination.per_page,
+            'total': pagination.total,
+            'pages': pagination.pages
+        }
+
+        return jsonify({'success': True, 'data': data}), 200
+
+    except Exception as e:
+        logger.error(f"Error retrieving patient analyses: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': 'Failed to retrieve analyses'}), 500
 
 
 # =====================================================

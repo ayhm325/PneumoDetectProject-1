@@ -100,6 +100,7 @@
             top: 0;
             z-index: 1000;
             transition: var(--transition);
+            min-height: 80px;
         }
 
         [data-theme="dark"] header {
@@ -110,22 +111,24 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 30px;
+            padding: 32px 40px 32px 40px;
             position: relative;
         }
 
         .branding {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 1.6rem;
-            font-weight: 700;
+            gap: 18px;
+            font-size: 2.2rem;
+            font-weight: 800;
             color: var(--primary-color);
             position: absolute;
-            right: 30px;
+            right: 40px;
+            height: 100%;
         }
 
         .branding i { font-size: 2rem; }
+    .branding i { font-size: 2.8rem; }
 
         .header-actions { 
             display: flex; 
@@ -561,15 +564,9 @@
                 <button class="theme-toggle" id="theme-toggle" aria-label="تبديل الوضع الليلي">
                     <i class="fas fa-moon" id="theme-icon"></i>
                 </button>
-                    <button class="theme-toggle" id="print-btn" aria-label="طباعة الصفحة">
-                        <i class="fas fa-print"></i>
-                    </button>
-                    <!-- Language Toggle -->
-                    <div class="lang-toggle" role="group" aria-label="تغيير اللغة">
-                        <button onclick="setLanguage('ar')" data-lang="ar" class="active" aria-pressed="true">AR</button>
-                        <button onclick="setLanguage('en')" data-lang="en" aria-pressed="false">EN</button>
-                        <div class="indicator"></div>
-                    </div>
+                <button class="theme-toggle" id="print-btn" aria-label="طباعة الصفحة">
+                    <i class="fas fa-print"></i>
+                </button>
                 <!-- Language Toggle -->
                 <div class="lang-toggle" role="group" aria-label="تغيير اللغة">
                     <button onclick="setLanguage('ar')" data-lang="ar" class="active" aria-pressed="true">AR</button>
@@ -588,10 +585,10 @@
                     منصة متقدمة لتحليل صور الأشعة السينية للصدر باستخدام الذكاء الاصطناعي بدقة وموثوقية عالية.
                 </p>
                 <div class="cta-buttons">
-                    <a href="#analysis" class="btn btn-primary btn-large">
+                    <button class="btn btn-primary btn-large" id="start-analysis-btn" type="button">
                         <i class="fas fa-microscope"></i>
                         <span data-i18n="home_cta_analyze">ابدأ تحليلاً جديداً</span>
-                    </a>
+                    </button>
                     <a href="register.html" class="btn btn-secondary btn-large">
                         <i class="fas fa-user-plus"></i>
                         <span data-i18n="home_cta_register">إنشاء حساب جديد</span>
@@ -641,10 +638,6 @@
                             <p data-i18n="upload_label_desc">PNG, JPG (الحد الأقصى: 50MB)</p>
                         </div>
                     </div>
-                    <button class="btn btn-secondary" style="margin-top: 20px; width: 100%;" onclick="loadSampleImage()">
-                        <i class="fas fa-image"></i>
-                        <span data-i18n="try_sample_image">تحليل</span>
-                    </button>
                 </div>
 
                 <!-- Enhanced Loading State -->
@@ -693,6 +686,18 @@
     </footer>
 
     <script>
+                // Smooth scroll to analysis section
+                document.addEventListener('DOMContentLoaded', function() {
+                    var startBtn = document.getElementById('start-analysis-btn');
+                    if (startBtn) {
+                        startBtn.addEventListener('click', function() {
+                            var analysisSection = document.getElementById('analysis-section');
+                            if (analysisSection) {
+                                analysisSection.scrollIntoView({ behavior: 'smooth' });
+                            }
+                        });
+                    }
+                });
         // Comprehensive Translations
         const translations = {
             ar: {

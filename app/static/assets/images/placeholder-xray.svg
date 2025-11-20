@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e5e7eb" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="300" fill="#1f2937"/>
+  <rect width="400" height="300" fill="url(#grid)"/>
+  
+  <!-- Lung Outline -->
+  <g opacity="0.4" fill="none" stroke="#10b981" stroke-width="2">
+    <ellipse cx="120" cy="150" rx="60" ry="100"/>
+    <ellipse cx="280" cy="150" rx="60" ry="100"/>
+    <!-- Bronchi -->
+    <path d="M 150 80 Q 160 120 170 150"/>
+    <path d="M 150 80 Q 140 120 130 150"/>
+    <path d="M 250 80 Q 260 120 270 150"/>
+    <path d="M 250 80 Q 240 120 230 150"/>
+  </g>
+  
+  <!-- Analysis Markers -->
+  <g opacity="0.3" fill="#3b82f6">
+    <circle cx="110" cy="100" r="8"/>
+    <circle cx="180" cy="180" r="6"/>
+    <circle cx="270" cy="140" r="7"/>
+    <circle cx="320" cy="200" r="5"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="200" y="270" text-anchor="middle" fill="#9ca3af" font-size="14" font-family="Arial">
+    أشعة سينية - صورة اختبار
+  </text>
+</svg>

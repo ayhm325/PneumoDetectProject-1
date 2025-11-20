@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="تسجيل الدخول إلى PneumoDetect - الوصول إلى حسابك">
     <title data-i18n="login_title">تسجيل الدخول - PneumoDetect</title>
+    <link rel="canonical" href="{{ request.url }}">
+    <meta property="og:title" content="PneumoDetect — تسجيل الدخول">
+    <meta property="og:description" content="تسجيل الدخول إلى PneumoDetect - الوصول إلى حسابك ومتابعة التحاليل الطبية">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:image" content="{{ url_for('static', filename='assets/images/og-image.png') }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="PneumoDetect - تسجيل الدخول">
+    <meta name="twitter:description" content="تسجيل الدخول إلى PneumoDetect - الوصول إلى حسابك ومتابعة التحاليل الطبية">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "PneumoDetect - Login",
+        "description": "تسجيل الدخول إلى حسابك في PneumoDetect",
+        "url": "{{ request.url }}"
+    }
+    </script>
     
     <!-- External Resources -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -51,10 +69,14 @@
         [dir="ltr"] { font-family: 'Inter', sans-serif; }
         [dir="rtl"] { font-family: 'Tajawal', sans-serif; }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
 
         body {
-            background-color: var(--light-color);
+            background: linear-gradient(135deg, var(--light-color) 0%, var(--light-section-bg) 100%);
             color: var(--dark-color);
             line-height: 1.7;
             transition: var(--transition);
@@ -75,25 +97,65 @@
 
         /* --- Header --- */
         header {
-            background-color: var(--white-color);
-            box-shadow: var(--box-shadow);
-            padding: 15px 30px;
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: var(--transition);
+            min-height: 80px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            z-index: 100;
+            padding: 32px 40px;
         }
 
         .branding {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 1.5rem;
-            font-weight: 700;
+            gap: 18px;
+            font-size: 2.2rem;
+            font-weight: 800;
             color: var(--primary-color);
+            position: absolute;
+            right: 40px;
+            height: 100%;
         }
 
-        .header-actions { display: flex; align-items: center; gap: 20px; }
+        .branding i {
+            font-size: 2rem;
+            animation: breathe 3s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .header-actions { 
+            display: flex; 
+            align-items: center; 
+            gap: 20px; 
+            position: absolute;
+            left: 30px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--dark-color);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 50px;
+            transition: var(--transition);
+        }
+
+        .nav-link:hover {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+        }
 
         .theme-toggle {
             background: none;
@@ -105,7 +167,10 @@
             border-radius: 50%;
             transition: var(--transition);
         }
-        .theme-toggle:hover { background-color: rgba(0, 0, 0, 0.1); }
+        .theme-toggle:hover { 
+            background-color: rgba(0, 0, 0, 0.1); 
+            transform: rotate(180deg); 
+        }
 
         .lang-toggle {
             position: relative;
@@ -114,6 +179,11 @@
             padding: 4px;
             display: flex;
         }
+        
+        [data-theme="dark"] .lang-toggle {
+            background-color: var(--gray-color);
+        }
+        
         .lang-toggle button {
             background: none;
             border: none;
@@ -126,7 +196,11 @@
             z-index: 2;
             position: relative;
         }
-        .lang-toggle button.active { color: var(--white-color); }
+        
+        .lang-toggle button.active { 
+            color: var(--white-color); 
+        }
+        
         .lang-toggle .indicator {
             position: absolute;
             top: 4px;
@@ -136,10 +210,24 @@
             transition: var(--transition);
             z-index: 1;
         }
-        [dir="rtl"] .lang-toggle .indicator { right: 4px; width: calc(50% - 4px); }
-        [dir="rtl"] .lang-toggle button[data-lang="en"].active ~ .indicator { transform: translateX(-100%); }
-        [dir="ltr"] .lang-toggle .indicator { left: 4px; width: calc(50% - 4px); }
-        [dir="ltr"] .lang-toggle button[data-lang="ar"].active ~ .indicator { transform: translateX(100%); }
+        
+        [dir="rtl"] .lang-toggle .indicator { 
+            right: 4px; 
+            width: calc(50% - 4px); 
+        }
+        
+        [dir="rtl"] .lang-toggle button[data-lang="en"].active ~ .indicator { 
+            transform: translateX(-100%); 
+        }
+        
+        [dir="ltr"] .lang-toggle .indicator { 
+            left: 4px; 
+            width: calc(50% - 4px); 
+        }
+        
+        [dir="ltr"] .lang-toggle button[data-lang="ar"].active ~ .indicator { 
+            transform: translateX(100%); 
+        }
 
         /* --- Main Layout --- */
         .login-container {
@@ -158,24 +246,45 @@
 
         .welcome-section {
             background: linear-gradient(135deg, rgba(0, 122, 122, 0.9), rgba(0, 92, 92, 0.9)), 
-                        url('https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80') center/cover;
+                        url('/static/assets/images/login-bg.svg') center/cover;
             color: var(--white-color);
             text-align: center;
             gap: 30px;
         }
 
-        .welcome-section h1 { font-size: 2.5rem; font-weight: 700; }
-        .welcome-section p { font-size: 1.1rem; opacity: 0.9; max-width: 80%; margin: 0 auto; }
+        .welcome-section h1 { 
+            font-size: 2.5rem; 
+            font-weight: 700; 
+        }
         
-        .welcome-features { display: flex; flex-direction: column; gap: 20px; }
+        .welcome-section p { 
+            font-size: 1.1rem; 
+            opacity: 0.9; 
+            max-width: 80%; 
+            margin: 0 auto; 
+        }
+        
+        .welcome-features { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+        }
+        
         .feature-item {
             display: flex;
             align-items: center;
             gap: 15px;
             text-align: right;
         }
-        [dir="ltr"] .feature-item { text-align: left; }
-        .feature-item i { font-size: 1.5rem; min-width: 30px; }
+        
+        [dir="ltr"] .feature-item { 
+            text-align: left; 
+        }
+        
+        .feature-item i { 
+            font-size: 1.5rem; 
+            min-width: 30px; 
+        }
 
         /* --- Form Styling --- */
         .login-box {
@@ -188,32 +297,52 @@
             margin: 0 auto;
         }
 
-        .login-box h2 { text-align: center; margin-bottom: 30px; color: var(--primary-color); }
+        .login-box h2 { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            color: var(--primary-color); 
+        }
 
-        .form-group { margin-bottom: 20px; }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--dark-color);
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        
+        .form-group label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            color: var(--dark-color); 
         }
 
         .input-group {
-            position: relative;
             display: flex;
             align-items: center;
+            gap: 12px;
         }
-        .input-group i {
-            position: absolute;
-            right: 15px;
+
+        .input-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            background-color: var(--light-section-bg);
+            border: 2px solid #e0e0e0;
+            border-radius: var(--border-radius);
             color: var(--gray-color);
-            z-index: 2;
+            font-size: 1.2rem;
+            transition: var(--transition);
         }
-        [dir="ltr"] .input-group i { right: auto; left: 15px; }
+
+        .input-group:focus-within .input-icon {
+            border-color: var(--tech-accent-color);
+            color: var(--tech-accent-color);
+            background-color: rgba(67, 97, 238, 0.1);
+        }
 
         .form-control {
-            width: 100%;
-            padding: 12px 15px 12px 45px;
+            flex: 1;
+            padding: 12px 15px;
             border: 2px solid #e0e0e0;
             border-radius: var(--border-radius);
             font-size: 1rem;
@@ -221,27 +350,75 @@
             background-color: var(--white-color);
             color: var(--dark-color);
         }
-        [dir="ltr"] .form-control { padding: 12px 45px 12px 15px; }
         
         .form-control:focus {
             border-color: var(--tech-accent-color);
             box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
         }
-        .form-control.error { border-color: var(--error-color); }
-
-        .password-group { position: relative; }
-        .password-toggle {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: var(--gray-color);
-            cursor: pointer;
-            z-index: 2;
+        
+        .form-control.error { 
+            border-color: var(--error-color); 
         }
-        [dir="ltr"] .password-toggle { right: auto; left: 45px; }
+
+        /* --- Password Toggle Button --- */
+        .password-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), rgba(67, 97, 238, 0.05));
+            border: 2px solid #e0e0e0;
+            color: var(--tech-accent-color);
+            cursor: pointer;
+            border-radius: var(--border-radius);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(67, 97, 238, 0.15);
+        }
+
+        .password-toggle:hover {
+            background: linear-gradient(135deg, var(--tech-accent-color), var(--tech-accent-hover));
+            color: var(--white-color);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+            border-color: var(--tech-accent-color);
+        }
+
+        .password-toggle:focus {
+            outline: none;
+            border-color: var(--tech-accent-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .password-toggle:active {
+            transform: scale(0.95);
+        }
+
+        .password-toggle i {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .password-toggle:hover i {
+            transform: rotate(10deg);
+        }
+
+        /* Add subtle animation when password is visible */
+        .password-visible {
+            background: linear-gradient(135deg, var(--success-color), #20c997);
+            border-color: var(--success-color);
+            color: var(--white-color);
+        }
+
+        .password-visible i {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
 
         .error-text {
             font-size: 0.85rem;
@@ -257,18 +434,23 @@
             margin-bottom: 25px;
             font-size: 0.9rem;
         }
+
         .checkbox-group {
             display: flex;
             align-items: center;
             gap: 8px;
         }
+
         .forgot-password-link {
             color: var(--tech-accent-color);
             text-decoration: none;
             font-weight: 600;
             transition: var(--transition);
         }
-        .forgot-password-link:hover { text-decoration: underline; }
+
+        .forgot-password-link:hover { 
+            text-decoration: underline; 
+        }
 
         /* --- Attempt Counter Warning --- */
         .warning-message {
@@ -300,15 +482,38 @@
             width: 100%;
             font-size: 1rem;
         }
+
         .btn-primary {
-            background-color: var(--tech-accent-color);
+            background: linear-gradient(135deg, var(--tech-accent-color), var(--tech-accent-hover));
             color: var(--white-color);
+            position: relative;
+            overflow: hidden;
         }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
         .btn-primary:hover {
-            background-color: var(--tech-accent-hover);
             transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(67, 97, 238, 0.3);
         }
-        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .btn:disabled { 
+            opacity: 0.7; 
+            cursor: not-allowed; 
+        }
 
         .loading-spinner {
             border: 2px solid rgba(255, 255, 255, 0.3);
@@ -318,7 +523,11 @@
             height: 16px;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
 
         /* --- Links --- */
         .signup-link {
@@ -326,23 +535,33 @@
             margin-top: 20px;
             font-size: 0.9rem;
         }
+
         .signup-link a {
             color: var(--tech-accent-color);
             text-decoration: none;
             font-weight: 600;
         }
-        .signup-link a:hover { text-decoration: underline; }
+
+        .signup-link a:hover { 
+            text-decoration: underline; 
+        }
 
         /* --- Notification System --- */
         .notification-container {
             position: fixed;
             top: 20px;
-            left: 20px;
+            right: 20px;
             z-index: 9999;
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
+
+        [dir="rtl"] .notification-container {
+            left: 20px;
+            right: auto;
+        }
+
         .notification {
             background-color: var(--white-color);
             color: var(--dark-color);
@@ -356,50 +575,134 @@
             border-right: 5px solid var(--tech-accent-color);
             animation: slideIn 0.3s ease-out;
         }
-        .notification.error { border-right-color: var(--error-color); }
-        .notification.success { border-right-color: var(--success-color); }
-        .notification.warning { border-right-color: var(--warning-color); }
-        .notification i { font-size: 1.5rem; }
-        .notification.error i { color: var(--error-color); }
-        .notification.success i { color: var(--success-color); }
-        .notification.warning i { color: var(--warning-color); }
-        .notification-content { flex-grow: 1; }
-        .notification-title { font-weight: 700; margin-bottom: 4px; }
-        .notification-message { font-size: 0.9rem; color: var(--gray-color); }
-        .notification-close { cursor: pointer; color: var(--gray-color); }
-        @keyframes slideIn { from { transform: translateX(-120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        [dir="rtl"] .notification {
+            border-right: none;
+            border-left: 5px solid var(--tech-accent-color);
+        }
+
+        .notification.error { 
+            border-right-color: var(--error-color); 
+        }
+        
+        [dir="rtl"] .notification.error { 
+            border-left-color: var(--error-color); 
+        }
+
+        .notification.success { 
+            border-right-color: var(--success-color); 
+        }
+        
+        [dir="rtl"] .notification.success { 
+            border-left-color: var(--success-color); 
+        }
+
+        .notification.warning { 
+            border-right-color: var(--warning-color); 
+        }
+        
+        [dir="rtl"] .notification.warning { 
+            border-left-color: var(--warning-color); 
+        }
+
+        .notification i { 
+            font-size: 1.5rem; 
+        }
+        
+        .notification.error i { 
+            color: var(--error-color); 
+        }
+        
+        .notification.success i { 
+            color: var(--success-color); 
+        }
+        
+        .notification.warning i { 
+            color: var(--warning-color); 
+        }
+
+        .notification-content { 
+            flex-grow: 1; 
+        }
+        
+        .notification-title { 
+            font-weight: 700; 
+            margin-bottom: 4px; 
+        }
+        
+        .notification-message { 
+            font-size: 0.9rem; 
+            color: var(--gray-color); 
+        }
+        
+        .notification-close { 
+            cursor: pointer; 
+            color: var(--gray-color); 
+        }
+        
+        @keyframes slideIn { 
+            from { 
+                transform: translateX(-120%); 
+                opacity: 0; 
+            } 
+            to { 
+                transform: translateX(0); 
+                opacity: 1; 
+            } 
+        }
 
         /* --- Responsive Design --- */
         @media (max-width: 992px) {
-            .login-container { flex-direction: column; }
-            .welcome-section { padding: 60px 40px; }
-            .form-section { padding: 40px 20px; }
+            .login-container { 
+                flex-direction: column; 
+            }
+            
+            .welcome-section { 
+                padding: 60px 40px; 
+            }
+            
+            .form-section { 
+                padding: 40px 20px; 
+            }
+            
+            .form-options { 
+                flex-direction: column; 
+                gap: 15px; 
+                align-items: flex-start; 
+            }
         }
+
         @media (max-width: 576px) {
-            .welcome-section h1 { font-size: 2rem; }
-            .login-box { padding: 30px 20px; }
-            .form-options { flex-direction: column; gap: 15px; align-items: flex-start; }
+            .welcome-section h1 { 
+                font-size: 2rem; 
+            }
+            
+            .login-box { 
+                padding: 30px 20px; 
+            }
         }
     </style>
 </head>
 <body role="application">
-    <!-- Skip to Main Content -->
-    <a href="#main-content" class="skip-to-main" aria-label="اذهب إلى نموذج الدخول">
-        <span data-i18n="skip_to_main">اذهب إلى نموذج الدخول</span>
-    </a>
-
     <!-- Notification Container -->
-    <div class="notification-container" id="notification-container"></div>
+    <div class="notification-container" id="notification-container" style="right: 20px; left: auto;"></div>
 
     <!-- Header -->
     <header role="banner">
-        <div class="branding">
+        <div class="branding" style="position: absolute; right: 30px; left: auto; direction: ltr;">
             <i class="fas fa-lungs" aria-hidden="true"></i>
             <h1>PneumoDetect</h1>
         </div>
-        <div class="header-actions">
+        <div class="header-actions" style="position: absolute; left: 30px; right: auto; flex-direction: row;">
+            <a href="/" class="nav-link" aria-label="الرئيسية">
+                <i class="fas fa-home"></i>
+                <span data-i18n="nav_home">الرئيسية</span>
+            </a>
             <button class="theme-toggle" id="theme-toggle" aria-label="تبديل الوضع الليلي">
                 <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+            <button class="theme-toggle" id="print-btn" aria-label="طباعة الصفحة">
+                <i class="fas fa-print"></i>
             </button>
             <div class="lang-toggle" role="group" aria-label="تغيير اللغة">
                 <button onclick="setLanguage('ar')" data-lang="ar" class="active" aria-pressed="true">AR</button>
@@ -461,8 +764,10 @@
                     <!-- Username -->
                     <div class="form-group">
                         <label for="login-username" data-i18n="login_username_label">اسم المستخدم</label>
-                        <div class="input-group">
-                            <i class="fas fa-user" aria-hidden="true"></i>
+                        <div class="input-group" id="password-group">
+                            <div class="input-icon">
+                                <i class="fas fa-user" aria-hidden="true"></i>
+                            </div>
                             <input 
                                 type="text" 
                                 id="login-username" 
@@ -484,8 +789,10 @@
                     <!-- Password -->
                     <div class="form-group">
                         <label for="login-password" data-i18n="login_password_label">كلمة المرور</label>
-                        <div class="input-group password-group">
-                            <i class="fas fa-lock" aria-hidden="true"></i>
+                        <div class="input-group">
+                            <div class="input-icon">
+                                <i class="fas fa-lock" aria-hidden="true"></i>
+                            </div>
                             <input 
                                 type="password" 
                                 id="login-password" 
@@ -541,12 +848,15 @@
         // Translations
         const translations = {
             ar: {
-                skip_to_main: "اذهب إلى نموذج الدخول",
+                nav_home: "الرئيسية",
                 login_welcome_title: "مرحباً بعودتك",
                 login_welcome_subtitle: "سجل دخولك للوصول إلى لوحة التحكم الخاصة بك ومتابعة تحاليلك الطبية.",
-                home_card1_title: "⚡ تحليل فوري", home_card1_desc: "احصل على نتائج دقيقة في ثوانٍ معدلة.",
-                home_card3_title: "🔒 أمان عالي", home_card3_desc: "بياناتك محمية بأعلى معايير التشفير.",
-                home_card4_title: "📈 سجل شامل", home_card4_desc: "احتفظ بسجل كامل لجميع تحاليلك.",
+                home_card1_title: "⚡ تحليل فوري",
+                home_card1_desc: "احصل على نتائج دقيقة في ثوانٍ معدلة.",
+                home_card3_title: "🔒 أمان عالي",
+                home_card3_desc: "بياناتك محمية بأعلى معايير التشفير.",
+                home_card4_title: "📈 سجل شامل",
+                home_card4_desc: "احتفظ بسجل كامل لجميع تحاليلك.",
                 login_title: "🔐 تسجيل الدخول",
                 login_username_label: "اسم المستخدم",
                 login_username_placeholder: "أدخل اسم المستخدم",
@@ -558,17 +868,21 @@
                 login_no_account: "ليس لديك حساب؟",
                 login_register_link: "إنشاء حساب جديد",
                 error_invalid_credentials: "اسم المستخدم أو كلمة المرور غير صحيحة.",
-                error_account_locked: "تم تأمين حسابك مؤقتاً بسبب محاولات الدخول المتكررة. يرجى المحاولة بعد 15 دقيقة.",
+                error_account_locked: "تم تأمين حسابك مؤقتاً بسبب محاولات الدخول المتكررة. يرجى المحاولة بعد 1 دقيقة.",
                 error_network: "فشل الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.",
-                success_login: "تم تسجيل الدخول بنجاح! جاري التحويل..."
+                success_login: "تم تسجيل الدخول بنجاح! جاري التحويل...",
+                remaining_attempts: "محاولات متبقية"
             },
             en: {
-                skip_to_main: "Go to login form",
+                nav_home: "Home",
                 login_welcome_title: "Welcome Back",
                 login_welcome_subtitle: "Log in to access your dashboard and track your medical analyses.",
-                home_card1_title: "⚡ Instant Analysis", home_card1_desc: "Get accurate results in seconds.",
-                home_card3_title: "🔒 High Security", home_card3_desc: "Your data is protected with highest encryption standards.",
-                home_card4_title: "📈 Comprehensive History", home_card4_desc: "Keep a complete record of all your analyses.",
+                home_card1_title: "⚡ Instant Analysis",
+                home_card1_desc: "Get accurate results in seconds.",
+                home_card3_title: "🔒 High Security",
+                home_card3_desc: "Your data is protected with highest encryption standards.",
+                home_card4_title: "📈 Comprehensive History",
+                home_card4_desc: "Keep a complete record of all your analyses.",
                 login_title: "🔐 Login",
                 login_username_label: "Username",
                 login_username_placeholder: "Enter your username",
@@ -580,9 +894,10 @@
                 login_no_account: "Don't have an account?",
                 login_register_link: "Create a new account",
                 error_invalid_credentials: "Invalid username or password.",
-                error_account_locked: "Your account has been temporarily locked due to multiple failed login attempts. Please try again in 15 minutes.",
+                error_account_locked: "Your account has been temporarily locked due to multiple failed login attempts. Please try again in 1 minute.",
                 error_network: "Failed to connect to the server. Please check your internet connection.",
-                success_login: "Login successful! Redirecting..."
+                success_login: "Login successful! Redirecting...",
+                remaining_attempts: "attempts remaining"
             }
         };
 
@@ -600,6 +915,23 @@
             setLanguage(savedLang);
             setTheme(savedTheme);
             setupEventListeners();
+            
+            // Check for stored login attempts
+            const storedAttempts = parseInt(localStorage.getItem('loginAttempts') || '0');
+            appState.loginAttempts = storedAttempts;
+            
+            // If account is locked, show message
+            if (appState.loginAttempts >= appState.maxLoginAttempts) {
+                const attemptFeedback = document.getElementById('attempt-feedback');
+                const attemptText = document.getElementById('attempt-text');
+                const loginBtn = document.getElementById('login-btn');
+                
+                if (attemptFeedback) {
+                    attemptFeedback.style.display = 'flex';
+                    attemptText.textContent = t('error_account_locked');
+                    loginBtn.disabled = true;
+                }
+            }
         });
 
         function setLanguage(lang) {
@@ -619,7 +951,7 @@
                     element.textContent = translations[lang][key];
                 }
             });
-
+            
             document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
                 const key = element.getAttribute('data-i18n-placeholder');
                 if (translations[lang] && translations[lang][key]) {
@@ -670,21 +1002,26 @@
             const passwordInput = document.getElementById('login-password');
             const toggleBtn = document.getElementById('toggle-password');
             const loginBtn = document.getElementById('login-btn');
-            const errorDiv = document.getElementById('login-error');
-            const attemptFeedback = document.getElementById('attempt-feedback');
             const themeToggle = document.getElementById('theme-toggle');
 
             // Theme toggle
             themeToggle.addEventListener('click', toggleTheme);
 
             // Password visibility toggle
-            toggleBtn?.addEventListener('click', () => {
-                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordInput.setAttribute('type', type);
-                toggleBtn.innerHTML = type === 'password' 
-                    ? '<i class="fas fa-eye"></i>' 
-                    : '<i class="fas fa-eye-slash"></i>';
-                toggleBtn.setAttribute('aria-pressed', type === 'text');
+            toggleBtn.addEventListener('click', () => {
+                const type = passwordInput.getAttribute('type');
+                const isPassword = type === 'password';
+                
+                passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+                toggleBtn.setAttribute('aria-pressed', isPassword);
+                toggleBtn.querySelector('i').className = isPassword ? 'fa-eye-slash' : 'fa-eye';
+                
+                // Add password-visible class when password is visible
+                if (isPassword) {
+                    toggleBtn.classList.add('password-visible');
+                } else {
+                    toggleBtn.classList.remove('password-visible');
+                }
             });
 
             // Form submission
@@ -696,22 +1033,38 @@
                 const rememberMe = document.getElementById('remember-me').checked;
                 
                 // Hide previous errors
+                const errorDiv = document.getElementById('login-error');
+                const usernameError = document.getElementById('username-error');
+                const passwordError = document.getElementById('password-error');
+                
                 if (errorDiv) {
                     errorDiv.style.display = 'none';
                     errorDiv.textContent = '';
                 }
-                
-                if (!username || !password) {
-                    showNotification(t('login_fill_fields'), 'error');
-                    return;
+                if (usernameError) {
+                    usernameError.style.display = 'none';
+                    usernameError.textContent = '';
+                }
+                if (passwordError) {
+                    passwordError.style.display = 'none';
+                    passwordError.textContent = '';
                 }
                 
                 // Check if account is locked
                 if (appState.loginAttempts >= appState.maxLoginAttempts) {
-                    showNotification(t('error_account_locked'), 'error');
+                    const attemptFeedback = document.getElementById('attempt-feedback');
+                    const attemptText = document.getElementById('attempt-text');
+                    const loginBtn = document.getElementById('login-btn');
+                    
                     attemptFeedback.style.display = 'flex';
-                    document.getElementById('attempt-text').textContent = t('error_account_locked');
+                    attemptText.textContent = t('error_account_locked');
                     loginBtn.disabled = true;
+                    return;
+                }
+                
+                // Validate form
+                if (!username || !password) {
+                    showNotification(t('error_invalid_credentials'), 'error');
                     return;
                 }
                 
@@ -721,7 +1074,7 @@
                 loginBtn.innerHTML = '<span class="loading-spinner"></span> جاري التحقق...';
 
                 try {
-                    // Get CSRF token from cookie or meta tag
+                    // Get CSRF token
                     const csrfToken = document.querySelector('[name="csrf_token"]')?.value || 
                                      document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='))?.split('=')[1] || '';
                     
@@ -730,8 +1083,7 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-Token': csrfToken || '',
-                            'XSRF-TOKEN': csrfToken || ''
+                            'X-CSRF-Token': csrfToken || ''
                         },
                         credentials: 'include',
                         body: JSON.stringify({
@@ -746,22 +1098,24 @@
                     console.log('Login response:', response.status, result);
                     
                     if (response.ok && result.success) {
-                        showNotification(t('success_login'), 'success');
                         // Reset login attempts on successful login
                         appState.loginAttempts = 0;
                         localStorage.setItem('loginAttempts', '0');
                         
-                        // Prefer server-provided redirect_url for a professional flow
-                        const serverRedirect = result.data?.redirect_url;
-                        const fallbackRedirect = result.data?.role === 'doctor' ? '/doctor' : 
-                                                 result.data?.role === 'admin' ? '/admin' : '/patient';
-                        const redirectUrl = serverRedirect || fallbackRedirect;
-                        console.log('Redirecting to (server-guided):', redirectUrl);
-
-                        // Use replace() to avoid polluting browser history (professional UX)
+                        // Show success notification
+                        showNotification(t('success_login'), 'success');
+                        
+                        // Redirect to appropriate dashboard
+                        const redirectUrl = result.data?.redirect_url || 
+                                         (result.data?.role === 'doctor' ? '/doctor' : 
+                                          result.data?.role === 'admin' ? '/admin' : '/patient');
+                        
+                        console.log('Redirecting to:', redirectUrl);
+                        
+                        // Show success message briefly before redirect
                         setTimeout(() => {
-                            window.location.replace(redirectUrl);
-                        }, 600);
+                            window.location.href = redirectUrl;
+                        }, 1500);
                     } else {
                         // Increment login attempts
                         appState.loginAttempts++;
@@ -769,58 +1123,47 @@
                         
                         const errorMsg = result.message || t('error_invalid_credentials');
                         
+                        // Show error notification
+                        showNotification(errorMsg, 'error');
+                        
                         // Show attempt feedback
-                        if (appState.loginAttempts >= appState.maxLoginAttempts) {
-                            attemptFeedback.style.display = 'flex';
-                            document.getElementById('attempt-text').textContent = t('error_account_locked');
-                            loginBtn.disabled = true;
-                            showNotification(t('error_account_locked'), 'error');
-                        } else {
+                        const attemptFeedback = document.getElementById('attempt-feedback');
+                        const attemptText = document.getElementById('attempt-text');
+                        const loginBtn = document.getElementById('login-btn');
+                        
+                        if (appState.loginAttempts < appState.maxLoginAttempts) {
                             const remainingAttempts = appState.maxLoginAttempts - appState.loginAttempts;
                             const attemptText = `${errorMsg} (${remainingAttempts} ${t('remaining_attempts')})`;
-                            showNotification(attemptText, 'error');
                             
                             attemptFeedback.style.display = 'flex';
-                            document.getElementById('attempt-text').textContent = attemptText;
+                            attemptText.textContent = attemptText;
+                            showNotification(attemptText, 'warning');
+                        } else {
+                            // Account is locked
+                            attemptFeedback.style.display = 'flex';
+                            attemptText.textContent = t('error_account_locked');
+                            loginBtn.disabled = true;
+                            showNotification(t('error_account_locked'), 'error');
                         }
                     }
                 } catch (error) {
                     console.error('Login error:', error);
-                    showNotification(error.message || t('error_network'), 'error');
+                    showNotification(t('error_network'), 'error');
                 } finally {
-                    // Restore button state if not locked
-                    if (appState.loginAttempts < appState.maxLoginAttempts) {
-                        loginBtn.disabled = false;
-                        loginBtn.innerHTML = originalBtnContent;
-                    }
+                    // Restore button state
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = originalBtnContent;
                 }
             });
-            
-            // Check for stored login attempts on page load
-            const storedAttempts = parseInt(localStorage.getItem('loginAttempts') || '0');
-            appState.loginAttempts = storedAttempts;
-            
-            if (appState.loginAttempts >= appState.maxLoginAttempts) {
-                attemptFeedback.style.display = 'flex';
-                document.getElementById('attempt-text').textContent = t('error_account_locked');
-                loginBtn.disabled = true;
-            }
         }
-        
-        // Initialize theme and language on load
-            return translations[appState.currentLang][key] || key; 
+
+        // Helper function for translations
+        function t(key) {
+            return translations[appState.currentLang][key] || key;
         }
     </script>
+    
     <!-- Core JavaScript Module -->
     <script src="{{ url_for('static', filename='core.js') }}"></script>
-    <script>
-        // Initialize PneumoApp on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.PneumoApp) {
-                PneumoApp.init();
-                PneumoApp.Theme.init();
-            }
-        });
-    </script>
 </body>
 </html>
